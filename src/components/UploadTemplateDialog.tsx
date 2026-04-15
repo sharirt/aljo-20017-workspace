@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   useFileUpload,
   useExecuteAction,
@@ -101,10 +101,21 @@ export const UploadTemplateDialog = ({
     }
   };
 
-  // Initialize edit mode
-  if (isEditMode && open && !pdfSignedUrl && editTemplate?.fileUrl) {
-    loadPdfUrl(editTemplate.fileUrl);
-  }
+  // Initialize edit mode - load PDF URL
+  useEffect(() => {
+    if (isEditMode && open && editTemplate?.fileUrl && !pdfSignedUrl) {
+      loadPdfUrl(editTemplate.fileUrl);
+    }
+  }, [isEditMode, open, editTemplate?.fileUrl]);
+
+  // Reset step when dialog opens with different mode
+  useEffect(() => {
+    if (open && isEditMode) {
+      setStep(2);
+    } else if (open && !isEditMode) {
+      setStep(1);
+    }
+  }, [open, isEditMode]);
 
   const handleStep1Submit = async () => {
     if (!file || !name.trim()) {
