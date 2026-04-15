@@ -5,35 +5,29 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, ChevronRight, ChevronDown, Info, Calendar as CalendarIcon } from "lucide-react";
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { format, parseISO, isToday, isBefore, differenceInDays, startOfMonth, endOfMonth, addMonths, subMonths, isSameMonth, isSameDay, getDay } from "date-fns";
-import { getPageUrl } from "@/lib/utils";
+import { format, parseISO, isToday, isBefore, differenceInDays, startOfMonth, endOfMonth, addMonths, subMonths, isSameMonth, getDay } from "date-fns";
+import { getPageUrl, cn } from "@/lib/utils";
 
 export default function StaffHolidaysPage() {
   const user = useUser();
   const navigate = useNavigate();
+
+  const { data: holidays, isLoading } = useEntityGetAll(HolidaysEntity);
+
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [pastHolidaysOpen, setPastHolidaysOpen] = useState(false);
+
+  const currentYear = new Date().getFullYear();
+  const nextYear = currentYear + 1;
 
   useEffect(() => {
     if (!user.isAuthenticated) {
       navigate(getPageUrl(LoginPage));
     }
   }, [user.isAuthenticated, navigate]);
-
-  if (!user.isAuthenticated) {
-    return null;
-  }
-
-  const currentYear = new Date().getFullYear();
-  const nextYear = currentYear + 1;
-
-  const { data: holidays, isLoading } = useEntityGetAll(HolidaysEntity);
-
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [pastHolidaysOpen, setPastHolidaysOpen] = useState(false);
 
   // Filter holidays for current and next year, sorted by date
   const filteredHolidays = useMemo(() => {
@@ -101,12 +95,10 @@ export default function StaffHolidaysPage() {
 
     const days: (Date | null)[] = [];
 
-    // Add empty cells for days before the month starts
     for (let i = 0; i < startDay; i++) {
       days.push(null);
     }
 
-    // Add all days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day));
     }
@@ -114,9 +106,13 @@ export default function StaffHolidaysPage() {
     return days;
   }, [currentMonth]);
 
+  if (!user.isAuthenticated) {
+    return null;
+  }
+
   if (isLoading) {
     return (
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="p-4 md:p-6 flex flex-col gap-6">
         <Skeleton className="h-20 w-full rounded-lg" />
         <Skeleton className="h-96 w-full rounded-lg" />
         <Skeleton className="h-28 w-full rounded-lg" />
@@ -126,9 +122,9 @@ export default function StaffHolidaysPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="p-4 md:p-6 flex flex-col gap-6">
       {/* Page Header */}
-      <div className="space-y-1">
+      <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold">Nova Scotia Statutory Holidays</h1>
         <p className="text-sm text-muted-foreground">
           Shifts worked on statutory holidays are paid at 1.5× your regular rate
@@ -139,14 +135,14 @@ export default function StaffHolidaysPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handlePrevMonth}>
-              <ChevronLeft className="h-5 w-5" />
+            <Button variant="ghost" size="icon" className="size-9" onClick={handlePrevMonth}>
+              <ChevronLeft />
             </Button>
             <h2 className="text-lg font-semibold text-center">
               {format(currentMonth, "MMMM yyyy")}
             </h2>
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleNextMonth}>
-              <ChevronRight className="h-5 w-5" />
+            <Button variant="ghost" size="icon" className="size-9" onClick={handleNextMonth}>
+              <ChevronRight />
             </Button>
           </div>
         </CardHeader>
@@ -175,13 +171,12 @@ export default function StaffHolidaysPage() {
               return (
                 <div
                   key={dateStr}
-                  className={`h-10 w-full flex flex-col items-center justify-center rounded-lg text-sm ${
-                    isHoliday
-                      ? "bg-chart-3/15 text-chart-3 font-semibold cursor-pointer hover:bg-chart-3/25"
-                      : ""
-                  } ${isTodayDate ? "ring-2 ring-primary ring-offset-1" : ""} ${
-                    isOtherMonth ? "text-muted-foreground/40" : ""
-                  }`}
+                  className={cn(
+                    "h-10 w-full flex flex-col items-center justify-center rounded-lg text-sm",
+                    isHoliday && "bg-chart-3/15 text-chart-3 font-semibold cursor-pointer hover:bg-chart-3/25",
+                    isTodayDate && "ring-2 ring-primary ring-offset-1",
+                    isOtherMonth && "text-muted-foreground/40"
+                  )}
                   onClick={() => handleDayClick(day)}
                 >
                   <span>{day.getDate()}</span>
@@ -194,7 +189,7 @@ export default function StaffHolidaysPage() {
       </Card>
 
       {/* Upcoming Holidays Section */}
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-lg">Upcoming Holidays</h2>
           <Badge variant="outline">{upcomingHolidays.length}</Badge>
@@ -202,14 +197,14 @@ export default function StaffHolidaysPage() {
 
         {upcomingHolidays.length === 0 ? (
           <div className="flex min-h-[180px] flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center">
-            <CalendarIcon className="mb-3 h-10 w-10 text-muted-foreground" />
+            <CalendarIcon className="mb-3 size-10 text-muted-foreground" />
             <p className="font-medium text-base">No upcoming holidays</p>
             <p className="text-sm text-muted-foreground mt-1">
               All holidays for this year have passed
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             {upcomingHolidays.map((holiday) => {
               if (!holiday.date) return null;
               const holidayDate = parseISO(holiday.date);
@@ -221,7 +216,7 @@ export default function StaffHolidaysPage() {
                   id={`holiday-${holiday.date}`}
                   className="border-l-4 border-l-chart-3 bg-chart-3/5"
                 >
-                  <CardContent className="p-4 space-y-1">
+                  <CardContent className="p-4 flex flex-col gap-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
                         <p className="font-semibold text-base">{holiday.name}</p>
@@ -249,19 +244,19 @@ export default function StaffHolidaysPage() {
       {/* Past Holidays Section */}
       {pastHolidays.length > 0 && (
         <Collapsible open={pastHolidaysOpen} onOpenChange={setPastHolidaysOpen}>
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between text-sm">
                 <span className="font-semibold">
                   {pastHolidaysOpen ? "Hide" : "Show"} Past Holidays ({pastHolidays.length})
                 </span>
                 <ChevronDown
-                  className={`h-4 w-4 transition-transform ${pastHolidaysOpen ? "rotate-180" : ""}`}
+                  className={cn("transition-transform", pastHolidaysOpen && "rotate-180")}
                 />
               </Button>
             </CollapsibleTrigger>
 
-            <CollapsibleContent className="space-y-3">
+            <CollapsibleContent className="flex flex-col gap-3">
               {pastHolidays.map((holiday) => {
                 if (!holiday.date) return null;
                 const holidayDate = parseISO(holiday.date);
@@ -273,7 +268,7 @@ export default function StaffHolidaysPage() {
                     id={`holiday-${holiday.date}`}
                     className="border-l-4 border-l-muted bg-muted/30 opacity-70"
                   >
-                    <CardContent className="p-4 space-y-1">
+                    <CardContent className="p-4 flex flex-col gap-1">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <p className="font-semibold text-base">{holiday.name}</p>
@@ -297,7 +292,7 @@ export default function StaffHolidaysPage() {
 
       {/* Info Box */}
       <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 flex items-start gap-3">
-        <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+        <Info className="size-5 text-primary shrink-0 mt-0.5" />
         <div className="flex-1">
           <p className="font-semibold text-sm">About Holiday Pay</p>
           <p className="text-sm text-muted-foreground mt-1">
