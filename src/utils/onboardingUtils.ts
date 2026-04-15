@@ -95,7 +95,7 @@ interface SignatureRequestInfo {
 
 /**
  * Determine the first incomplete wizard step based on profile and document data
- * Returns 0-indexed step (0=profile, 1=documents, 2=terms, 3=signing, 4=complete)
+ * Returns 0-indexed step (0=profile, 1=documents, 2=signing, 3=terms, 4=complete)
  */
 export function getFirstIncompleteStep(
   profile?: IStaffProfilesEntity | null,
@@ -111,19 +111,19 @@ export function getFirstIncompleteStep(
   const docCompletion = getDocumentCompletion(profile?.roleType, documents);
   if (!docCompletion.allUploaded) return 1;
 
-  // Step 3: Check if terms were already acknowledged (onboardingStatus changed to pending_review)
-  if (profile?.onboardingStatus !== "pending_review" && profile?.onboardingStatus !== "approved") {
-    return 2;
-  }
-
-  // Step 4: Check if all contracts are signed/approved
+  // Step 3: Check if all contracts are signed/approved
   if (activeTemplateIds && activeTemplateIds.length > 0) {
     const requests = signatureRequests || [];
     const allSignedOrApproved = activeTemplateIds.every((templateId) => {
       const req = requests.find((r) => r.contractTemplateId === templateId);
       return req && (req.status === "signed" || req.status === "approved");
     });
-    if (!allSignedOrApproved) return 3;
+    if (!allSignedOrApproved) return 2;
+  }
+
+  // Step 4: Check if terms were already acknowledged (onboardingStatus changed to pending_review)
+  if (profile?.onboardingStatus !== "pending_review" && profile?.onboardingStatus !== "approved") {
+    return 3;
   }
 
   // All steps complete
@@ -136,8 +136,8 @@ export function getFirstIncompleteStep(
 export const WIZARD_STEPS = [
   { number: 1, label: "Profile", shortLabel: "Profile" },
   { number: 2, label: "Documents", shortLabel: "Docs" },
-  { number: 3, label: "Terms", shortLabel: "Terms" },
-  { number: 4, label: "Sign Contract", shortLabel: "Sign" },
+  { number: 3, label: "Sign Contract", shortLabel: "Sign" },
+  { number: 4, label: "Terms", shortLabel: "Terms" },
   { number: 5, label: "Complete", shortLabel: "Done" },
 ];
 

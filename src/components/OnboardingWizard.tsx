@@ -95,7 +95,7 @@ export const OnboardingWizard = ({ staffProfile }: OnboardingWizardProps) => {
         data: { onboardingStatus: "pending_review" },
       });
       toast.success("Onboarding submitted successfully!");
-      setCurrentStep(3); // Go to Sign Contract step
+      setCurrentStep(4); // Go to Complete step
     } catch {
       toast.error("Failed to submit onboarding. Please try again.");
     }
@@ -135,19 +135,19 @@ export const OnboardingWizard = ({ staffProfile }: OnboardingWizardProps) => {
         />
       )}
       {currentStep === 2 && (
-        <OnboardingStepTerms
-          onComplete={handleCompleteOnboarding}
-          onBack={handleBack}
-          isSubmitting={isUpdating}
-        />
-      )}
-      {currentStep === 3 && (
         <OnboardingStepSigning
           staffProfileId={staffProfile.id}
           staffEmail={profileWithId?.email || staffProfile.email || ""}
           staffName={staffFullName}
           onNext={handleNext}
           onBack={handleBack}
+        />
+      )}
+      {currentStep === 3 && (
+        <OnboardingStepTerms
+          onComplete={handleCompleteOnboarding}
+          onBack={handleBack}
+          isSubmitting={isUpdating}
         />
       )}
       {currentStep === 4 && <OnboardingStepComplete />}
