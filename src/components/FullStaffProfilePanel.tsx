@@ -13,6 +13,7 @@ import {
   FacilitiesEntity,
   RoleUpgradeApplicationsEntity,
   GetSignedFileUrlAction,
+  SignatureRequestsEntity,
   type IStaffDocumentsEntity,
 } from "@/product-types";
 import {
@@ -112,6 +113,7 @@ import { StarRating } from "@/components/StarRating";
 import { ExperienceActivityCard } from "@/components/ExperienceActivityCard";
 import { GiveBonusDialog } from "@/components/GiveBonusDialog";
 import { BonusHistoryCard } from "@/components/BonusHistoryCard";
+import { ContractSignaturesSection } from "@/components/ContractSignaturesSection";
 
 // --- Helpers ---
 
@@ -221,6 +223,12 @@ export const FullStaffProfilePanel = ({
 
   const { data: allUpgradeApps, isLoading: loadingUpgrades } = useEntityGetAll(
     RoleUpgradeApplicationsEntity,
+    { staffProfileId: staffId },
+    { enabled: !!staffId }
+  );
+
+  const { data: signatureRequestsData } = useEntityGetAll(
+    SignatureRequestsEntity,
     { staffProfileId: staffId },
     { enabled: !!staffId }
   );
@@ -505,8 +513,13 @@ export const FullStaffProfilePanel = ({
       { key: "emergencyContactPhone", label: "Emergency Contact Phone" },
     ];
     const fieldBlockers = requiredFields.filter(({ key }) => !staff?.[key]);
-    return docBlockers.length === 0 && fieldBlockers.length === 0;
-  }, [staff, staffDocuments]);
+    // Check that all signature requests are approved
+    const sigRequests = (signatureRequestsData as any[]) || [];
+    const hasUnapprovedContracts = sigRequests.some(
+      (r: any) => r.status === "pending" || r.status === "signed"
+    );
+    return docBlockers.length === 0 && fieldBlockers.length === 0 && !hasUnapprovedContracts;
+  }, [staff, staffDocuments, signatureRequestsData]);
 
   const handleApproveOnboarding = useCallback(async () => {
     if (!staff?.id) return;
@@ -1243,6 +1256,23 @@ export const FullStaffProfilePanel = ({
                           </span>
                         </div>
                       ))}
+                      {(() => {
+                        const sigReqs = (signatureRequestsData as any[]) || [];
+                        const pendingContracts = sigReqs.filter(
+                          (r: any) => r.status === "pending" || r.status === "signed"
+                        );
+                        return pendingContracts.map((r: any) => (
+                          <div key={r.id} className="flex items-center gap-2">
+                            <Clock className="h-3.5 w-3.5 text-chart-3 shrink-0" />
+                            <span className="text-xs text-foreground flex-1">
+                              {r.contractTemplateName || "Contract"} — Pending contract signature
+                            </span>
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-chart-3/20 text-chart-3">
+                              {r.status === "pending" ? "Awaiting signature" : "Awaiting approval"}
+                            </span>
+                          </div>
+                        ));
+                      })()}
                     </div>
                   </div>
                 );
@@ -1507,6 +1537,13 @@ export const FullStaffProfilePanel = ({
 
         {/* 12. Bonus History */}
         <BonusHistoryCard key={bonusKey} staffProfileId={staffId} />
+
+        {/* 13. Contract Signatures */}
+        <ContractSignaturesSection
+          staffProfileId={staffId}
+          staffEmail={staff.email || ""}
+          staffName={staffName}
+        />
       </div>
 
       {/* Give Bonus Dialog */}

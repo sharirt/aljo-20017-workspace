@@ -41,6 +41,7 @@ import { getPageUrl } from "@/lib/utils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+import { SignedContractsSection } from "@/components/SignedContractsSection";
 import { ComplianceProgressCard } from "@/components/ComplianceProgressCard";
 import { RequiredDocumentCard } from "@/components/RequiredDocumentCard";
 import { OptionalDocumentCard } from "@/components/OptionalDocumentCard";
@@ -563,6 +564,11 @@ function StaffMyDocumentsContent() {
           </CardContent>
         )}
       </Card>
+
+      {/* Signed Contracts Section */}
+      {staffProfile?.id && (
+        <SignedContractsSection staffProfileId={staffProfile.id} />
+      )}
 
       {/* Bottom Note */}
       <Card className="bg-muted/50">

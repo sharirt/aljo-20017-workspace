@@ -113,6 +113,65 @@ export const BonusesEntity = {
   instanceType: {} as IBonusesEntity,
 } as const;
 
+/**
+ * undefined
+ */
+export interface IContractTemplatesEntityContractTemplatesEntityItemsItemObject {
+  /** Unique field identifier  */
+  id: string;
+  /** X position normalized 0-1  */
+  x: number;
+  /** Y position normalized 0-1  */
+  y: number;
+  /** Width normalized 0-1  */
+  w: number;
+  /** Height normalized 0-1  */
+  h: number;
+  /** Page number (1-based)  */
+  page: number;
+  /** Field type: signature, date, text, initials, checkbox  */
+  type: string;
+  /** Signing role this field belongs to  */
+  role: string;
+  /** Optional condition expression  */
+  condition?: string;
+}
+
+/**
+ * JSON array of field placement objects configured by admin via the in-app PDF viewer. Each object contains: id, x, y, w, h (normalized 0-1 coordinates), page (1-based), type (signature/date/text/initials), role, condition.
+ */
+export interface IContractTemplatesEntityFieldsObject {
+  /** Array of field placement objects  */
+  items?: IContractTemplatesEntityContractTemplatesEntityItemsItemObject[];
+}
+
+/**
+ * Each record represents a contract template uploaded by an admin. Stores the DocuSeal template ID returned after upload, the original PDF URL, and the JSON array of field placement objects (x, y, w, h, page, type, role) configured by the admin via the in-app PDF viewer. Only active templates are sent to new staff during onboarding.
+ */
+export interface IContractTemplatesEntity {
+  /** DocuSeal template ID returned by the Upload PDF Template action. Used when submitting signing requests via Submit Prefilled Templates.  */
+  docusealTemplateId?: number;
+  /** Human-readable name for the contract template (e.g. 'Staff Employment Agreement 2026')  */
+  name?: string;
+  /** Internal URL of the uploaded PDF file stored in the platform file system  */
+  fileUrl?: string;
+  /** Admin notes or description of what this contract covers  */
+  description?: string;
+  /** Email of the admin who uploaded this template  */
+  uploadedByEmail?: string;
+  /** Whether this template is currently active and will be sent to new staff during onboarding. Only active templates are included in signature request batches.  */
+  isActive?: boolean;
+  /** The DocuSeal signing role name used in this template (e.g. 'Staff', 'First Party'). Must match the role defined in the template fields.  */
+  roleName?: string;
+  /** JSON array of field placement objects configured by admin via the in-app PDF viewer. Each object contains: id, x, y, w, h (normalized 0-1 coordinates), page (1-based), type (signature/date/text/initials), role, condition.  */
+  fields?: IContractTemplatesEntityFieldsObject;
+}
+
+export const ContractTemplatesEntity = {
+  tableBlockId: "69dfd42bcff6430068c41e6a",
+  instanceType: {} as IContractTemplatesEntity,
+} as const;
+
 export type EarlyPayRequestsEntityStatusEnum =
   | "pending"
   | "approved"
@@ -694,6 +753,51 @@ export const ShiftTradesEntity = {
   instanceType: {} as IShiftTradesEntity,
 } as const;
 
+export type SignatureRequestsEntityStatusEnum =
+  | "pending"
+  | "signed"
+  | "approved"
+  | "rejected";
+
+/**
+ * Each record represents one signing request sent to a staff member for a specific contract template. Created when staff reaches the final onboarding step. Tracks DocuSeal submission ID, signing URL, status lifecycle (pending→signed→approved/rejected), signed document URL, and admin review outcome. One record per staff-template pair.
+ */
+export interface ISignatureRequestsEntity {
+  /** URL of the completed signed document PDF. Populated by the HandleSignatureCompleted action when the E-Signature Event webhook fires.  */
+  signedDocumentUrl?: string;
+  /** Current status of the signature request. pending=sent but not yet signed, signed=staff completed signing, approved=admin approved the signed doc, rejected=admin rejected and re-send may be needed.  */
+  status?: SignatureRequestsEntityStatusEnum;
+  /** Full name of the staff member at the time the request was sent. Denormalized for display.  */
+  staffName?: string;
+  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
+  staffEmail?: string;
+  /** Timestamp when the staff member completed signing. Populated by the HandleSignatureCompleted action.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  signedAt?: string;
+  /** Foreign key reference to StaffProfiles.id — the staff member who needs to sign  */
+  staffProfileId?: string;
+  /** Name of the contract template at the time of sending. Denormalized for display even if template is later renamed.  */
+  contractTemplateName?: string;
+  /** Email of the admin who approved or rejected this signed document.  */
+  reviewedByEmail?: string;
+  /** DocuSeal submission ID returned by Submit Prefilled Templates. Used to match incoming E-Signature Event webhook callbacks.  */
+  submissionId?: number;
+  /** The signing URL sent to the staff member. Can be shared directly if email/SMS delivery fails.  */
+  signingUrl?: string;
+  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
+  docusealTemplateId?: number;
+  /** Admin-provided reason for rejecting the signed document. Only populated when status=rejected.  */
+  rejectionReason?: string;
+  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
+  contractTemplateId?: string;
+  /** Timestamp when the signing request was sent to the staff member.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  sentAt?: string;
+}
+
+export const SignatureRequestsEntity = {
+  tableBlockId: "69dfd42ecff6430068c421e7",
+  instanceType: {} as ISignatureRequestsEntity,
+} as const;
+
 export type StaffAvailabilityEntityDayOfWeekEnum =
   | "monday"
   | "tuesday"
@@ -1164,6 +1268,11 @@ export const AdminApplicationsPage = {
   pageName: "AdminApplications",
 } as const;
 
+export const AdminContractTemplatesPage = {
+  pageBlockId: "69dfd5cc781c3c119fd68ea4",
+  pageName: "AdminContractTemplates",
+} as const;
+
 export const AdminDashboardPage = {
   pageBlockId: "69c5194b792a18ec3189313e",
   pageName: "AdminDashboard",
@@ -1396,6 +1505,89 @@ export const ApproveRoleUpgradeAction = {
 
   inputInstanceType: {} as IApproveRoleUpgradeActionInput,
   outputInstanceType: {} as IApproveRoleUpgradeActionOutput,
+} as const;
+
+/**
+ * ApproveSignatureRequestAction input payload
+ */
+export interface IApproveSignatureRequestActionActionInput {
+  /** ID of the SignatureRequests record  */
+  signatureRequestId: string;
+  /** Email of the admin approving the document  */
+  reviewedByEmail: string;
+}
+
+export type ApproveSignatureRequestActionActionOutputStatusEnum =
+  | "pending"
+  | "signed"
+  | "approved"
+  | "rejected";
+
+/**
+ * The item updated in the table, keys are the column names, values are the column values
+ */
+export interface IApproveSignatureRequestActionActionOutputApproveSignatureRequestActionActionOutputItemsItemObject {
+  /** The id of the item to update. Must be an existing id in the table.  */
+  id?: string;
+  /** Item created at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  createdAt?: string;
+  /** Item updated at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  updatedAt?: string;
+  /** Item created by user id  */
+  createdBy?: string;
+  /** Item updated by user id  */
+  updatedBy?: string;
+  /** Item updated by agent id  */
+  updatedByAgentId?: string;
+  /** Item tenant id  */
+  tenantId?: string;
+  /** URL of the completed signed document PDF. Populated by the HandleSignatureCompleted action when the E-Signature Event webhook fires.  */
+  signedDocumentUrl?: string;
+  /** Current status of the signature request. pending=sent but not yet signed, signed=staff completed signing, approved=admin approved the signed doc, rejected=admin rejected and re-send may be needed.  */
+  status?: ApproveSignatureRequestActionActionOutputStatusEnum;
+  /** Full name of the staff member at the time the request was sent. Denormalized for display.  */
+  staffName?: string;
+  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
+  staffEmail?: string;
+  /** Timestamp when the staff member completed signing. Populated by the HandleSignatureCompleted action.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  signedAt?: string;
+  /** Foreign key reference to StaffProfiles.id — the staff member who needs to sign  */
+  staffProfileId?: string;
+  /** Name of the contract template at the time of sending. Denormalized for display even if template is later renamed.  */
+  contractTemplateName?: string;
+  /** Email of the admin who approved or rejected this signed document.  */
+  reviewedByEmail?: string;
+  /** DocuSeal submission ID returned by Submit Prefilled Templates. Used to match incoming E-Signature Event webhook callbacks.  */
+  submissionId?: number;
+  /** The signing URL sent to the staff member. Can be shared directly if email/SMS delivery fails.  */
+  signingUrl?: string;
+  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
+  docusealTemplateId?: number;
+  /** Admin-provided reason for rejecting the signed document. Only populated when status=rejected.  */
+  rejectionReason?: string;
+  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
+  contractTemplateId?: string;
+  /** Timestamp when the signing request was sent to the staff member.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  sentAt?: string;
+}
+
+/**
+ * ApproveSignatureRequestAction output payload
+ */
+export interface IApproveSignatureRequestActionActionOutput {
+  /** The items updated in the table  */
+  items: IApproveSignatureRequestActionActionOutputApproveSignatureRequestActionActionOutputItemsItemObject[];
+}
+
+/**
+ * ApproveSignatureRequestActionAction
+ * Admin approves a signed contract document. Updates the SignatureRequests record status to approved and records the reviewer email.
+ */
+export const ApproveSignatureRequestActionAction = {
+  actionBlockId: "69dfd5909cdbf306d48f890e",
+
+  inputInstanceType: {} as IApproveSignatureRequestActionActionInput,
+  outputInstanceType: {} as IApproveSignatureRequestActionActionOutput,
 } as const;
 
 /**
@@ -2401,6 +2593,91 @@ export const RejectRoleUpgradeAction = {
 } as const;
 
 /**
+ * RejectSignatureRequestAction input payload
+ */
+export interface IRejectSignatureRequestActionActionInput {
+  /** ID of the SignatureRequests record  */
+  signatureRequestId: string;
+  /** Email of the admin rejecting the document  */
+  reviewedByEmail: string;
+  /** Reason for rejection shown to staff  */
+  rejectionReason: string;
+}
+
+export type RejectSignatureRequestActionActionOutputStatusEnum =
+  | "pending"
+  | "signed"
+  | "approved"
+  | "rejected";
+
+/**
+ * The item updated in the table, keys are the column names, values are the column values
+ */
+export interface IRejectSignatureRequestActionActionOutputRejectSignatureRequestActionActionOutputItemsItemObject {
+  /** The id of the item to update. Must be an existing id in the table.  */
+  id?: string;
+  /** Item created at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  createdAt?: string;
+  /** Item updated at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  updatedAt?: string;
+  /** Item created by user id  */
+  createdBy?: string;
+  /** Item updated by user id  */
+  updatedBy?: string;
+  /** Item updated by agent id  */
+  updatedByAgentId?: string;
+  /** Item tenant id  */
+  tenantId?: string;
+  /** URL of the completed signed document PDF. Populated by the HandleSignatureCompleted action when the E-Signature Event webhook fires.  */
+  signedDocumentUrl?: string;
+  /** Current status of the signature request. pending=sent but not yet signed, signed=staff completed signing, approved=admin approved the signed doc, rejected=admin rejected and re-send may be needed.  */
+  status?: RejectSignatureRequestActionActionOutputStatusEnum;
+  /** Full name of the staff member at the time the request was sent. Denormalized for display.  */
+  staffName?: string;
+  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
+  staffEmail?: string;
+  /** Timestamp when the staff member completed signing. Populated by the HandleSignatureCompleted action.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  signedAt?: string;
+  /** Foreign key reference to StaffProfiles.id — the staff member who needs to sign  */
+  staffProfileId?: string;
+  /** Name of the contract template at the time of sending. Denormalized for display even if template is later renamed.  */
+  contractTemplateName?: string;
+  /** Email of the admin who approved or rejected this signed document.  */
+  reviewedByEmail?: string;
+  /** DocuSeal submission ID returned by Submit Prefilled Templates. Used to match incoming E-Signature Event webhook callbacks.  */
+  submissionId?: number;
+  /** The signing URL sent to the staff member. Can be shared directly if email/SMS delivery fails.  */
+  signingUrl?: string;
+  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
+  docusealTemplateId?: number;
+  /** Admin-provided reason for rejecting the signed document. Only populated when status=rejected.  */
+  rejectionReason?: string;
+  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
+  contractTemplateId?: string;
+  /** Timestamp when the signing request was sent to the staff member.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  sentAt?: string;
+}
+
+/**
+ * RejectSignatureRequestAction output payload
+ */
+export interface IRejectSignatureRequestActionActionOutput {
+  /** The items updated in the table  */
+  items: IRejectSignatureRequestActionActionOutputRejectSignatureRequestActionActionOutputItemsItemObject[];
+}
+
+/**
+ * RejectSignatureRequestActionAction
+ * Admin rejects a signed contract document with a reason. Updates the SignatureRequests record status to rejected and stores the rejection reason and reviewer email.
+ */
+export const RejectSignatureRequestActionAction = {
+  actionBlockId: "69dfd5919cdbf306d48f891b",
+
+  inputInstanceType: {} as IRejectSignatureRequestActionActionInput,
+  outputInstanceType: {} as IRejectSignatureRequestActionActionOutput,
+} as const;
+
+/**
  * RequestOrientation input payload
  */
 export interface IRequestOrientationActionInput {
@@ -2435,6 +2712,95 @@ export const RequestOrientationAction = {
 
   inputInstanceType: {} as IRequestOrientationActionInput,
   outputInstanceType: {} as IRequestOrientationActionOutput,
+} as const;
+
+/**
+ * ResendSignatureRequestAction input payload
+ */
+export interface IResendSignatureRequestActionActionInput {
+  /** ID of the existing SignatureRequests record to update  */
+  signatureRequestId: string;
+  /** Staff member email  */
+  staffEmail: string;
+  /** Staff member full name  */
+  staffName: string;
+  /** DocuSeal template ID  */
+  docusealTemplateId: number;
+  /** DocuSeal signing role name  */
+  roleName: string;
+}
+
+export type ResendSignatureRequestActionActionOutputStatusEnum =
+  | "pending"
+  | "signed"
+  | "approved"
+  | "rejected";
+
+/**
+ * The item updated in the table, keys are the column names, values are the column values
+ */
+export interface IResendSignatureRequestActionActionOutputResendSignatureRequestActionActionOutputItemsItemObject {
+  /** The id of the item to update. Must be an existing id in the table.  */
+  id?: string;
+  /** Item created at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  createdAt?: string;
+  /** Item updated at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  updatedAt?: string;
+  /** Item created by user id  */
+  createdBy?: string;
+  /** Item updated by user id  */
+  updatedBy?: string;
+  /** Item updated by agent id  */
+  updatedByAgentId?: string;
+  /** Item tenant id  */
+  tenantId?: string;
+  /** URL of the completed signed document PDF. Populated by the HandleSignatureCompleted action when the E-Signature Event webhook fires.  */
+  signedDocumentUrl?: string;
+  /** Current status of the signature request. pending=sent but not yet signed, signed=staff completed signing, approved=admin approved the signed doc, rejected=admin rejected and re-send may be needed.  */
+  status?: ResendSignatureRequestActionActionOutputStatusEnum;
+  /** Full name of the staff member at the time the request was sent. Denormalized for display.  */
+  staffName?: string;
+  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
+  staffEmail?: string;
+  /** Timestamp when the staff member completed signing. Populated by the HandleSignatureCompleted action.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  signedAt?: string;
+  /** Foreign key reference to StaffProfiles.id — the staff member who needs to sign  */
+  staffProfileId?: string;
+  /** Name of the contract template at the time of sending. Denormalized for display even if template is later renamed.  */
+  contractTemplateName?: string;
+  /** Email of the admin who approved or rejected this signed document.  */
+  reviewedByEmail?: string;
+  /** DocuSeal submission ID returned by Submit Prefilled Templates. Used to match incoming E-Signature Event webhook callbacks.  */
+  submissionId?: number;
+  /** The signing URL sent to the staff member. Can be shared directly if email/SMS delivery fails.  */
+  signingUrl?: string;
+  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
+  docusealTemplateId?: number;
+  /** Admin-provided reason for rejecting the signed document. Only populated when status=rejected.  */
+  rejectionReason?: string;
+  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
+  contractTemplateId?: string;
+  /** Timestamp when the signing request was sent to the staff member.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  sentAt?: string;
+}
+
+/**
+ * ResendSignatureRequestAction output payload
+ */
+export interface IResendSignatureRequestActionActionOutput {
+  /** The items updated in the table  */
+  items: IResendSignatureRequestActionActionOutputResendSignatureRequestActionActionOutputItemsItemObject[];
+}
+
+/**
+ * ResendSignatureRequestActionAction
+ * Re-sends a DocuSeal signing request to a staff member after rejection. Creates a new submission and updates the existing SignatureRequests record with the new submissionId, signingUrl, and resets status to pending.
+ */
+export const ResendSignatureRequestActionAction = {
+  actionBlockId: "69dfd56eab4212309b8024f2",
+
+  inputInstanceType: {} as IResendSignatureRequestActionActionInput,
+  outputInstanceType: {} as IResendSignatureRequestActionActionOutput,
 } as const;
 
 /**
@@ -2478,6 +2844,99 @@ export const ScheduleOrientationShiftAction = {
 
   inputInstanceType: {} as IScheduleOrientationShiftActionInput,
   outputInstanceType: {} as IScheduleOrientationShiftActionOutput,
+} as const;
+
+/**
+ * SendSignatureRequestAction input payload
+ */
+export interface ISendSignatureRequestActionActionInput {
+  /** FK to StaffProfiles.id  */
+  staffProfileId: string;
+  /** Staff member email  */
+  staffEmail: string;
+  /** Staff member full name  */
+  staffName: string;
+  /** FK to ContractTemplates.id  */
+  contractTemplateId: string;
+  /** Template name for denormalization  */
+  contractTemplateName: string;
+  /** DocuSeal template ID  */
+  docusealTemplateId: number;
+  /** DocuSeal signing role name  */
+  roleName: string;
+}
+
+export type SendSignatureRequestActionActionOutputStatusEnum =
+  | "pending"
+  | "signed"
+  | "approved"
+  | "rejected";
+
+/**
+ * The item inserted into the table, keys are the column names, values are the column values
+ */
+export interface ISendSignatureRequestActionActionOutputSendSignatureRequestActionActionOutputItemsItemObject {
+  /** Item id  */
+  id?: string;
+  /** Item created at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  createdAt?: string;
+  /** Item updated at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  updatedAt?: string;
+  /** Item created by user id  */
+  createdBy?: string;
+  /** Item updated by user id  */
+  updatedBy?: string;
+  /** Item updated by agent id  */
+  updatedByAgentId?: string;
+  /** Item tenant id  */
+  tenantId?: string;
+  /** URL of the completed signed document PDF. Populated by the HandleSignatureCompleted action when the E-Signature Event webhook fires.  */
+  signedDocumentUrl?: string;
+  /** Current status of the signature request. pending=sent but not yet signed, signed=staff completed signing, approved=admin approved the signed doc, rejected=admin rejected and re-send may be needed.  */
+  status?: SendSignatureRequestActionActionOutputStatusEnum;
+  /** Full name of the staff member at the time the request was sent. Denormalized for display.  */
+  staffName?: string;
+  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
+  staffEmail?: string;
+  /** Timestamp when the staff member completed signing. Populated by the HandleSignatureCompleted action.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  signedAt?: string;
+  /** Foreign key reference to StaffProfiles.id — the staff member who needs to sign  */
+  staffProfileId?: string;
+  /** Name of the contract template at the time of sending. Denormalized for display even if template is later renamed.  */
+  contractTemplateName?: string;
+  /** Email of the admin who approved or rejected this signed document.  */
+  reviewedByEmail?: string;
+  /** DocuSeal submission ID returned by Submit Prefilled Templates. Used to match incoming E-Signature Event webhook callbacks.  */
+  submissionId?: number;
+  /** The signing URL sent to the staff member. Can be shared directly if email/SMS delivery fails.  */
+  signingUrl?: string;
+  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
+  docusealTemplateId?: number;
+  /** Admin-provided reason for rejecting the signed document. Only populated when status=rejected.  */
+  rejectionReason?: string;
+  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
+  contractTemplateId?: string;
+  /** Timestamp when the signing request was sent to the staff member.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  sentAt?: string;
+}
+
+/**
+ * SendSignatureRequestAction output payload
+ */
+export interface ISendSignatureRequestActionActionOutput {
+  /** The items inserted into the table  */
+  items: ISendSignatureRequestActionActionOutputSendSignatureRequestActionActionOutputItemsItemObject[];
+}
+
+/**
+ * SendSignatureRequestActionAction
+ * Sends a DocuSeal signing request to a staff member for a specific contract template. Calls Submit Prefilled Templates then inserts a SignatureRequests record with status=pending, submissionId, and signingUrl.
+ */
+export const SendSignatureRequestActionAction = {
+  actionBlockId: "69dfd55bab4212309b800c67",
+
+  inputInstanceType: {} as ISendSignatureRequestActionActionInput,
+  outputInstanceType: {} as ISendSignatureRequestActionActionOutput,
 } as const;
 
 /**
@@ -2620,6 +3079,101 @@ export const SubmitStaffRatingAction = {
 
   inputInstanceType: {} as ISubmitStaffRatingActionInput,
   outputInstanceType: {} as ISubmitStaffRatingActionOutput,
+} as const;
+
+/**
+ * undefined
+ */
+export interface IUploadContractTemplateActionActionInputUploadContractTemplateActionActionInputFieldsItemObject {
+  id?: string;
+  x?: number;
+  y?: number;
+  w?: number;
+  h?: number;
+  page?: number;
+  type?: string;
+  role?: string;
+}
+
+/**
+ * UploadContractTemplateAction input payload
+ */
+export interface IUploadContractTemplateActionActionInput {
+  /** Human-readable template name  */
+  name: string;
+  /** Admin notes about this contract  */
+  description?: string;
+  /** Internal URL of the uploaded PDF file  */
+  fileUrl: string;
+  /** DocuSeal signing role name (e.g. Staff)  */
+  roleName: string;
+  /** Field placement objects from the PDF viewer  */
+  fields: IUploadContractTemplateActionActionInputUploadContractTemplateActionActionInputFieldsItemObject[];
+  /** Email of the admin uploading the template  */
+  uploadedByEmail: string;
+}
+
+/**
+ * The item inserted into the table, keys are the column names, values are the column values
+ */
+export interface IUploadContractTemplateActionActionOutputUploadContractTemplateActionActionOutputItemsItemObject {
+  /** Item id  */
+  id?: string;
+  /** Item created at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  createdAt?: string;
+  /** Item updated at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  updatedAt?: string;
+  /** Item created by user id  */
+  createdBy?: string;
+  /** Item updated by user id  */
+  updatedBy?: string;
+  /** Item updated by agent id  */
+  updatedByAgentId?: string;
+  /** Item tenant id  */
+  tenantId?: string;
+  /** DocuSeal template ID returned by the Upload PDF Template action. Used when submitting signing requests via Submit Prefilled Templates.  */
+  docusealTemplateId?: number;
+  /** Human-readable name for the contract template (e.g. 'Staff Employment Agreement 2026')  */
+  name?: string;
+  /** Internal URL of the uploaded PDF file stored in the platform file system  */
+  fileUrl?: string;
+  /** Admin notes or description of what this contract covers  */
+  description?: string;
+  /** Email of the admin who uploaded this template  */
+  uploadedByEmail?: string;
+  /** Whether this template is currently active and will be sent to new staff during onboarding. Only active templates are included in signature request batches.  */
+  isActive?: boolean;
+  /** The DocuSeal signing role name used in this template (e.g. 'Staff', 'First Party'). Must match the role defined in the template fields.  */
+  roleName?: string;
+  /** JSON array of field placement objects configured by admin via the in-app PDF viewer. Each object contains: id, x, y, w, h (normalized 0-1 coordinates), page (1-based), type (signature/date/text/initials), role, condition.  */
+  fields?: IUploadContractTemplateActionActionOutputFieldsObject;
+}
+
+/**
+ * JSON array of field placement objects configured by admin via the in-app PDF viewer. Each object contains: id, x, y, w, h (normalized 0-1 coordinates), page (1-based), type (signature/date/text/initials), role, condition.
+ */
+export interface IUploadContractTemplateActionActionOutputFieldsObject {
+  /** Array of field placement objects  */
+  items?: IUploadContractTemplateActionActionOutputUploadContractTemplateActionActionOutputItemsItemObject[];
+}
+
+/**
+ * UploadContractTemplateAction output payload
+ */
+export interface IUploadContractTemplateActionActionOutput {
+  /** The items inserted into the table  */
+  items: IUploadContractTemplateActionActionOutputUploadContractTemplateActionActionOutputItemsItemObject[];
+}
+
+/**
+ * UploadContractTemplateActionAction
+ * Uploads a PDF file as a DocuSeal template with field placements, then inserts a record into ContractTemplates table. Called by admin when creating a new contract template.
+ */
+export const UploadContractTemplateActionAction = {
+  actionBlockId: "69dfd53a11deff0cfe5917bb",
+
+  inputInstanceType: {} as IUploadContractTemplateActionActionInput,
+  outputInstanceType: {} as IUploadContractTemplateActionActionOutput,
 } as const;
 
 export type ValidateGeofenceActionInputModeEnum = "strict" | "relaxed";

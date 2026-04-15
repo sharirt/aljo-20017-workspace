@@ -53,6 +53,7 @@ import {
   Receipt,
   HelpCircle,
   ClipboardCheck,
+  FileSignature,
   FileSpreadsheet,
   Wallet,
   ChevronsUpDown,
@@ -86,6 +87,7 @@ import {
   FMMessagesPage,
   FMInvoicesPage,
   FMTimesheetPage,
+  AdminContractTemplatesPage,
   AdminHelpPage,
   FacilityManagerHelpPage,
   StaffHelpPage,
@@ -203,6 +205,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         { title: "Reports", url: getPageUrl(AdminReportsPage), icon: BarChart2, badge: "" },
         { title: "Messages", url: getPageUrl(AdminMessagesPage), icon: MessageCircle, badge: unreadBadgeText },
         { title: "Settings", url: getPageUrl(AdminSettingsPage), icon: Settings, badge: "" },
+        { title: "Contract Templates", url: getPageUrl(AdminContractTemplatesPage), icon: FileSignature, badge: "" },
         { title: "Profile", url: getPageUrl(ProfilePage), icon: UserCircle, badge: "" },
         { title: "Help", url: getPageUrl(AdminHelpPage), icon: HelpCircle, badge: "" },
       ];
