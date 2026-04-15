@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface OnboardingStepSigningProps {
   staffProfileId: string;
@@ -90,7 +91,10 @@ export const OnboardingStepSigning = ({
     requests.find((r) => r.contractTemplateId === templateId);
 
   const handleSendContract = async (template: TemplateWithId) => {
-    if (!template.docusealTemplateId) return;
+    if (!template.docusealTemplateId) {
+      toast.error("This contract template is not configured yet. Please contact your administrator.");
+      return;
+    }
     setSendingIds((prev) => new Set(prev).add(template.id));
     try {
       await sendSignature({
@@ -104,7 +108,7 @@ export const OnboardingStepSigning = ({
       });
       refetchRequests();
     } catch {
-      // skip failures silently
+      toast.error("Failed to send contract. Please try again.");
     } finally {
       setSendingIds((prev) => {
         const next = new Set(prev);
