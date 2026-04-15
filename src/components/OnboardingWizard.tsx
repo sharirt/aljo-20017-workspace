@@ -1,6 +1,11 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useEntityGetAll, useEntityUpdate } from "@blocksdiy/blocks-client-sdk/reactSdk";
-import { StaffDocumentsEntity, StaffProfilesEntity } from "@/product-types";
+import {
+  StaffDocumentsEntity,
+  StaffProfilesEntity,
+  ContractTemplatesEntity,
+  SignatureRequestsEntity,
+} from "@/product-types";
 import type { IStaffProfilesEntity } from "@/product-types";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,6 +13,7 @@ import { OnboardingStepper } from "@/components/OnboardingStepper";
 import { OnboardingStepProfile } from "@/components/OnboardingStepProfile";
 import { OnboardingStepDocuments } from "@/components/OnboardingStepDocuments";
 import { OnboardingStepTerms } from "@/components/OnboardingStepTerms";
+import { OnboardingStepSigning } from "@/components/OnboardingStepSigning";
 import { OnboardingStepComplete } from "@/components/OnboardingStepComplete";
 import { getFirstIncompleteStep } from "@/utils/onboardingUtils";
 
@@ -23,7 +29,7 @@ export const OnboardingWizard = ({ staffProfile }: OnboardingWizardProps) => {
     { enabled: !!staffProfile.id }
   );
 
-  // Re-fetch profile to get latest data (since user may have updated profile and come back)
+  // Re-fetch profile to get latest data
   const { data: latestProfiles, isLoading: loadingLatest } = useEntityGetAll(
     StaffProfilesEntity,
     { email: staffProfile.email },
@@ -31,13 +37,38 @@ export const OnboardingWizard = ({ staffProfile }: OnboardingWizardProps) => {
   );
   const latestProfile = latestProfiles?.[0] || staffProfile;
 
+  // Fetch contract templates and signature requests
+  const { data: allTemplates } = useEntityGetAll(ContractTemplatesEntity);
+  const { data: signatureRequests } = useEntityGetAll(
+    SignatureRequestsEntity,
+    { staffProfileId: staffProfile.id },
+    { enabled: !!staffProfile.id }
+  );
+
+  const activeTemplateIds = useMemo(
+    () =>
+      ((allTemplates as any[]) || [])
+        .filter((t: any) => t.isActive)
+        .map((t: any) => t.id as string),
+    [allTemplates]
+  );
+
+  const sigReqInfos = useMemo(
+    () =>
+      ((signatureRequests as any[]) || []).map((r: any) => ({
+        contractTemplateId: r.contractTemplateId as string | undefined,
+        status: r.status as string | undefined,
+      })),
+    [signatureRequests]
+  );
+
   // Update hook for completing onboarding
   const { updateFunction, isLoading: isUpdating } = useEntityUpdate(StaffProfilesEntity);
 
   // Calculate starting step from data
   const calculatedStartStep = useMemo(
-    () => getFirstIncompleteStep(latestProfile, documents),
-    [latestProfile, documents]
+    () => getFirstIncompleteStep(latestProfile, documents, sigReqInfos, activeTemplateIds),
+    [latestProfile, documents, sigReqInfos, activeTemplateIds]
   );
 
   const [currentStep, setCurrentStep] = useState<number | null>(null);
@@ -50,7 +81,7 @@ export const OnboardingWizard = ({ staffProfile }: OnboardingWizardProps) => {
   }, [loadingDocs, loadingLatest, calculatedStartStep, currentStep]);
 
   const handleNext = useCallback(() => {
-    setCurrentStep((prev) => Math.min((prev ?? 0) + 1, 3));
+    setCurrentStep((prev) => Math.min((prev ?? 0) + 1, 4));
   }, []);
 
   const handleBack = useCallback(() => {
@@ -64,16 +95,19 @@ export const OnboardingWizard = ({ staffProfile }: OnboardingWizardProps) => {
         data: { onboardingStatus: "pending_review" },
       });
       toast.success("Onboarding submitted successfully!");
-      setCurrentStep(3);
+      setCurrentStep(3); // Go to Sign Contract step
     } catch {
       toast.error("Failed to submit onboarding. Please try again.");
     }
   }, [updateFunction, staffProfile.id]);
 
+  const profileWithId = latestProfile as IStaffProfilesEntity & { id: string };
+  const staffFullName = `${profileWithId?.firstName || ""} ${profileWithId?.lastName || ""}`.trim();
+
   // Loading state
   if (loadingDocs || loadingLatest || currentStep === null) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto flex flex-col gap-6">
         <Skeleton className="h-16 w-full rounded-lg" />
         <Skeleton className="h-80 w-full rounded-lg" />
       </div>
@@ -81,7 +115,7 @@ export const OnboardingWizard = ({ staffProfile }: OnboardingWizardProps) => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto flex flex-col gap-6">
       {/* Stepper */}
       <OnboardingStepper currentStep={currentStep} />
 
@@ -107,7 +141,16 @@ export const OnboardingWizard = ({ staffProfile }: OnboardingWizardProps) => {
           isSubmitting={isUpdating}
         />
       )}
-      {currentStep === 3 && <OnboardingStepComplete />}
+      {currentStep === 3 && (
+        <OnboardingStepSigning
+          staffProfileId={staffProfile.id}
+          staffEmail={profileWithId?.email || staffProfile.email || ""}
+          staffName={staffFullName}
+          onNext={handleNext}
+          onBack={handleBack}
+        />
+      )}
+      {currentStep === 4 && <OnboardingStepComplete />}
     </div>
   );
 };

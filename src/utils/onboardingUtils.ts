@@ -86,12 +86,22 @@ export function getDocumentCompletion(
 }
 
 /**
+ * Signature request info for determining signing step completion
+ */
+interface SignatureRequestInfo {
+  contractTemplateId?: string;
+  status?: string;
+}
+
+/**
  * Determine the first incomplete wizard step based on profile and document data
- * Returns 0-indexed step (0=profile, 1=documents, 2=terms, 3=complete)
+ * Returns 0-indexed step (0=profile, 1=documents, 2=terms, 3=signing, 4=complete)
  */
 export function getFirstIncompleteStep(
   profile?: IStaffProfilesEntity | null,
-  documents?: IStaffDocumentsEntity[]
+  documents?: IStaffDocumentsEntity[],
+  signatureRequests?: SignatureRequestInfo[],
+  activeTemplateIds?: string[]
 ): number {
   // Step 1: Check profile completion
   const profileCompletion = getProfileCompletion(profile);
@@ -106,8 +116,18 @@ export function getFirstIncompleteStep(
     return 2;
   }
 
+  // Step 4: Check if all contracts are signed/approved
+  if (activeTemplateIds && activeTemplateIds.length > 0) {
+    const requests = signatureRequests || [];
+    const allSignedOrApproved = activeTemplateIds.every((templateId) => {
+      const req = requests.find((r) => r.contractTemplateId === templateId);
+      return req && (req.status === "signed" || req.status === "approved");
+    });
+    if (!allSignedOrApproved) return 3;
+  }
+
   // All steps complete
-  return 3;
+  return 4;
 }
 
 /**
@@ -117,7 +137,8 @@ export const WIZARD_STEPS = [
   { number: 1, label: "Profile", shortLabel: "Profile" },
   { number: 2, label: "Documents", shortLabel: "Docs" },
   { number: 3, label: "Terms", shortLabel: "Terms" },
-  { number: 4, label: "Complete", shortLabel: "Done" },
+  { number: 4, label: "Sign Contract", shortLabel: "Sign" },
+  { number: 5, label: "Complete", shortLabel: "Done" },
 ];
 
 /**

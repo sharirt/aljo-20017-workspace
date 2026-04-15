@@ -9,6 +9,7 @@ import {
   FacilitiesEntity,
   StaffProfilesEntity,
   ShiftApplicationsEntity,
+  TimeLogsEntity,
   AdminAssignStaffToShiftAction,
 } from "@/product-types";
 import type {
@@ -16,6 +17,7 @@ import type {
   IFacilitiesEntity,
   IStaffProfilesEntity,
   IShiftApplicationsEntity,
+  ITimeLogsEntity,
 } from "@/product-types";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,6 +33,7 @@ type ShiftWithId = IShiftsEntity & { id: string };
 type FacilityWithId = IFacilitiesEntity & { id: string };
 type StaffWithId = IStaffProfilesEntity & { id: string };
 type ApplicationWithId = IShiftApplicationsEntity & { id: string };
+type TimeLogWithId = ITimeLogsEntity & { id: string };
 
 export default function AdminShiftManagement() {
   const user = useUser();
@@ -50,6 +53,7 @@ export default function AdminShiftManagement() {
     isLoading: isLoadingApplications,
     refetch: refetchApplications,
   } = useEntityGetAll(ShiftApplicationsEntity);
+  const { data: timeLogsRaw } = useEntityGetAll(TimeLogsEntity);
   // Action
   const { executeFunction: executeAssign, isLoading: isExecutingAction } =
     useExecuteAction(AdminAssignStaffToShiftAction);
@@ -90,6 +94,10 @@ export default function AdminShiftManagement() {
   const allApplications = useMemo(
     () => (applicationsRaw as ApplicationWithId[] | undefined) || [],
     [applicationsRaw]
+  );
+  const allTimeLogs = useMemo(
+    () => (timeLogsRaw as TimeLogWithId[] | undefined) || [],
+    [timeLogsRaw]
   );
 
   // Lookup maps
@@ -297,6 +305,9 @@ export default function AdminShiftManagement() {
                 assignedStaff={assignedStaff}
                 onAssignStaff={handleOpenAssignModal as (shift: any) => void}
                 onUnassignStaff={handleOpenUnassignDialog as (shift: any, name: string) => void}
+                timeLogs={allTimeLogs}
+                allApplications={allApplications}
+                staffMap={staffMap}
               />
             );
           })}

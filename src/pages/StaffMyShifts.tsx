@@ -266,9 +266,9 @@ export default function StaffMyShiftsPage() {
         // Deduplicate
         if (seenIds.has(shift.id)) return false;
 
-        // Source 1: existing approved applications (open/claimed/in_progress)
+        // Source 1: existing approved applications (open/claimed only - in_progress goes to in-progress tab)
         const isApproved = approvedShiftIds.includes(shift.id) &&
-          (shift.status === "open" || shift.status === "claimed" || shift.status === "in_progress");
+          (shift.status === "open" || shift.status === "claimed");
 
         // Source 2: privately assigned shifts (status = "assigned", assignedStaffId = me)
         const isAssigned = assignedShiftIds.has(shift.id);
@@ -365,6 +365,23 @@ export default function StaffMyShiftsPage() {
     if (!inProgressShift || !timeLogs) return null;
     return timeLogs.find((log) => log.shiftProfileId === inProgressShift.id && !log.clockOutTime);
   }, [inProgressShift, timeLogs]);
+
+  // Auto-switch to in-progress tab when there is an active shift with a time log
+  const hasAutoSwitchedTab = useRef(false);
+  useEffect(() => {
+    if (inProgressShift && activeTimeLog && !hasAutoSwitchedTab.current) {
+      hasAutoSwitchedTab.current = true;
+      setActiveTab("in-progress");
+    }
+  }, [inProgressShift, activeTimeLog]);
+
+  // Check if a shift already has an active time log (to prevent double clock-in)
+  const hasActiveTimeLogForShift = useCallback((shiftId?: string) => {
+    if (!shiftId || !timeLogs || !staffProfileId) return false;
+    return timeLogs.some(
+      (log) => log.shiftProfileId === shiftId && log.staffProfileId === staffProfileId && !log.clockOutTime
+    );
+  }, [timeLogs, staffProfileId]);
 
   // ── Pay Period Calculations ──
   const currentPayPeriod = useMemo(() => getCurrentPayPeriod(), []);
@@ -651,6 +668,13 @@ export default function StaffMyShiftsPage() {
   const handleClockIn = async (shift: typeof ShiftsEntity['instanceType']) => {
     if (!staffProfileId) return;
 
+    // Prevent double clock-in: check if time log already exists
+    if (hasActiveTimeLogForShift(shift.id)) {
+      toast.info("You are already clocked in for this shift.", { duration: 5000 });
+      setActiveTab("in-progress");
+      return;
+    }
+
     if (shift.startDateTime) {
       try {
         const now = new Date();
@@ -739,6 +763,14 @@ export default function StaffMyShiftsPage() {
 
       // GPS accuracy check
       if (accuracy > geofenceRadius) {
+        if (geofenceMode === "strict") {
+          toast.error(
+            `Clock-in blocked: GPS accuracy is ${Math.round(accuracy)}m, which exceeds the geofence radius of ${geofenceRadius}m. Please move to a location with better GPS signal.`,
+            { duration: 8000 }
+          );
+          setClockingIn(false);
+          return;
+        }
         toast.warning(
           `GPS accuracy is ${Math.round(accuracy)}m, which exceeds the geofence radius. Location recorded but may be inaccurate.`,
           { duration: 5000 }
@@ -746,6 +778,14 @@ export default function StaffMyShiftsPage() {
         geofenceStatus = "outside_flagged";
       } else if (distance <= geofenceRadius) {
         geofenceStatus = "within";
+      } else if (geofenceMode === "strict") {
+        // Strict mode: hard block
+        toast.error(
+          `Clock-in blocked: You are ${Math.round(distance)}m from the facility. You must be within ${geofenceRadius}m to clock in at this facility.`,
+          { duration: 8000 }
+        );
+        setClockingIn(false);
+        return;
       } else if (geofenceMode === "flag") {
         geofenceStatus = "outside_flagged";
         toast.warning(
@@ -1220,8 +1260,9 @@ export default function StaffMyShiftsPage() {
                 const duration = getShiftDuration(shift.startDateTime, shift.endDateTime);
                 const isWithdrawalPending = withdrawalPendingShiftIds.has(shift.id);
                 const shiftIsAssigned = assignedShiftIds.has(shift.id || "");
-                const showClockInButton = !isWithdrawalPending && canClockIn(shift.startDateTime);
-                const showWithdrawLink = !isWithdrawalPending && canWithdraw(shift.startDateTime);
+                const alreadyClockedIn = hasActiveTimeLogForShift(shift.id);
+                const showClockInButton = !isWithdrawalPending && !alreadyClockedIn && canClockIn(shift.startDateTime);
+                const showWithdrawLink = !isWithdrawalPending && !alreadyClockedIn && canWithdraw(shift.startDateTime);
 
                 return (
                   <UpcomingShiftCard
@@ -1915,7 +1956,15 @@ export default function StaffMyShiftsPage() {
           <DialogHeader>
             <DialogTitle>Location Access Required</DialogTitle>
             <DialogDescription>
-              GPS location permission was denied. You can retry after enabling location access in your browser settings, or proceed without GPS.
+              {(() => {
+                if (gpsPermissionAction === "clockIn" && gpsPendingShift) {
+                  const pendingFacility = getFacility(gpsPendingShift.facilityProfileId);
+                  if (pendingFacility?.geofenceMode === "strict") {
+                    return "GPS is required for strict geofence facilities. Please enable location access in your browser settings and try again.";
+                  }
+                }
+                return "GPS location permission was denied. You can retry after enabling location access in your browser settings, or proceed without GPS.";
+              })()}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex flex-col gap-2 sm:flex-row">
@@ -1932,55 +1981,75 @@ export default function StaffMyShiftsPage() {
             >
               Retry
             </Button>
-            <Button
-              onClick={async () => {
-                setShowGPSPermissionDialog(false);
-                if (gpsPermissionAction === "clockIn" && gpsPendingShift) {
-                  // Clock in without GPS
-                  try {
-                    setClockingIn(true);
-                    let isLateBlocked = false;
-                    if (gpsPendingShift.startDateTime) {
-                      const windowInfo = getClockInWindowInfo(gpsPendingShift.startDateTime, new Date());
-                      isLateBlocked = windowInfo.isLateButAllowed;
+            {(() => {
+              // In strict mode for clock-in, don't show "Clock In Without GPS"
+              const isStrictClockIn = gpsPermissionAction === "clockIn" && gpsPendingShift &&
+                getFacility(gpsPendingShift.facilityProfileId)?.geofenceMode === "strict";
+              if (isStrictClockIn) {
+                return (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowGPSPermissionDialog(false);
+                      setGpsPendingShift(null);
+                    }}
+                  >
+                    Close
+                  </Button>
+                );
+              }
+              return (
+                <Button
+                  onClick={async () => {
+                    setShowGPSPermissionDialog(false);
+                    if (gpsPermissionAction === "clockIn" && gpsPendingShift) {
+                      // Clock in without GPS (flag mode only)
+                      try {
+                        setClockingIn(true);
+                        let isLateBlocked = false;
+                        if (gpsPendingShift.startDateTime) {
+                          const windowInfo = getClockInWindowInfo(gpsPendingShift.startDateTime, new Date());
+                          isLateBlocked = windowInfo.isLateButAllowed;
+                        }
+                        const now = new Date().toISOString();
+                        const timeLogData: Record<string, unknown> = {
+                          clockInTime: now,
+                          clockInLat: null,
+                          clockInLng: null,
+                          geofenceStatus: "outside_flagged",
+                          shiftProfileId: gpsPendingShift.id,
+                          staffProfileId: staffProfileId,
+                          facilityProfileId: gpsPendingShift.facilityProfileId,
+                        };
+                        if (isLateBlocked) {
+                          timeLogData.isLateBlocked = true;
+                        }
+                        await createTimeLog({ data: timeLogData });
+                        await updateShift({
+                          id: gpsPendingShift.id || "",
+                          data: { status: "in_progress" },
+                        });
+                        toast.success("Clocked in without GPS");
+                        await refetchShifts();
+                        await refetchTimeLogs();
+                        setShowShiftModal(false);
+                        setActiveTab("in-progress");
+                      } catch {
+                        toast.error("Failed to clock in");
+                      } finally {
+                        setClockingIn(false);
+                        setGpsPendingShift(null);
+                      }
+                    } else {
+                      // Clock out without GPS - never block
+                      await executeClockOut(null, null, true);
                     }
-                    const now = new Date().toISOString();
-                    const timeLogData: Record<string, unknown> = {
-                      clockInTime: now,
-                      clockInLat: null,
-                      clockInLng: null,
-                      geofenceStatus: "outside_flagged",
-                      shiftProfileId: gpsPendingShift.id,
-                      staffProfileId: staffProfileId,
-                      facilityProfileId: gpsPendingShift.facilityProfileId,
-                    };
-                    if (isLateBlocked) {
-                      timeLogData.isLateBlocked = true;
-                    }
-                    await createTimeLog({ data: timeLogData });
-                    await updateShift({
-                      id: gpsPendingShift.id || "",
-                      data: { status: "in_progress" },
-                    });
-                    toast.success("Clocked in without GPS");
-                    await refetchShifts();
-                    await refetchTimeLogs();
-                    setShowShiftModal(false);
-                    setActiveTab("in-progress");
-                  } catch {
-                    toast.error("Failed to clock in");
-                  } finally {
-                    setClockingIn(false);
-                    setGpsPendingShift(null);
-                  }
-                } else {
-                  // Clock out without GPS - never block
-                  await executeClockOut(null, null, true);
-                }
-              }}
-            >
-              {gpsPermissionAction === "clockIn" ? "Clock In Without GPS" : "Clock Out Without GPS"}
-            </Button>
+                  }}
+                >
+                  {gpsPermissionAction === "clockIn" ? "Clock In Without GPS" : "Clock Out Without GPS"}
+                </Button>
+              );
+            })()}
           </DialogFooter>
         </DialogContent>
       </Dialog>

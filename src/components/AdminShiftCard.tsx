@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import {
   FileText,
   GraduationCap,
   CheckCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   formatShiftDateTime,
@@ -24,7 +26,13 @@ import {
   getShiftDurationHours,
 } from "@/utils/shiftUtils";
 import { getStaffDisplayName } from "@/utils/shiftApplicationUtils";
-import type { IFacilitiesEntity, IStaffProfilesEntity } from "@/product-types";
+import { StaffActivityPanel } from "@/components/StaffActivityPanel";
+import type {
+  IFacilitiesEntity,
+  IStaffProfilesEntity,
+  ITimeLogsEntity,
+  IShiftApplicationsEntity,
+} from "@/product-types";
 
 interface ShiftInstance {
   id: string;
@@ -43,12 +51,19 @@ interface ShiftInstance {
   shiftStaffRate?: number;
 }
 
+type TimeLogWithId = ITimeLogsEntity & { id: string };
+type ApplicationWithId = IShiftApplicationsEntity & { id: string };
+type StaffWithId = IStaffProfilesEntity & { id: string };
+
 interface AdminShiftCardProps {
   shift: ShiftInstance;
   facility?: IFacilitiesEntity & { id: string };
   assignedStaff?: (IStaffProfilesEntity & { id: string }) | null;
   onAssignStaff: (shift: ShiftInstance) => void;
   onUnassignStaff: (shift: ShiftInstance, staffName: string) => void;
+  timeLogs?: TimeLogWithId[];
+  allApplications?: ApplicationWithId[];
+  staffMap?: Map<string, StaffWithId>;
 }
 
 export const AdminShiftCard = ({
@@ -57,7 +72,12 @@ export const AdminShiftCard = ({
   assignedStaff,
   onAssignStaff,
   onUnassignStaff,
+  timeLogs,
+  allApplications,
+  staffMap,
 }: AdminShiftCardProps) => {
+  const [showActivity, setShowActivity] = useState(false);
+
   const duration = useMemo(
     () => getShiftDurationHours(shift.startDateTime, shift.endDateTime),
     [shift.startDateTime, shift.endDateTime]
@@ -205,6 +225,32 @@ export const AdminShiftCard = ({
             <UserMinus className="h-4 w-4 mr-2" />
             Unassign
           </Button>
+        )}
+
+        {/* Staff Activity Toggle */}
+        {timeLogs && allApplications && staffMap && (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs"
+              onClick={() => setShowActivity((v) => !v)}
+            >
+              <Users className="mr-1.5" />
+              {showActivity ? "Hide Staff Activity" : "View Staff Activity"}
+              {showActivity ? <ChevronUp className="ml-1.5" /> : <ChevronDown className="ml-1.5" />}
+            </Button>
+
+            {showActivity && (
+              <StaffActivityPanel
+                shiftId={shift.id}
+                timeLogs={timeLogs}
+                applications={allApplications}
+                staffMap={staffMap}
+                facility={facility}
+              />
+            )}
+          </>
         )}
       </CardContent>
     </Card>
