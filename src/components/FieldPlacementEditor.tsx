@@ -9,8 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { X, Plus } from "lucide-react";
+import { PdfViewer } from "@/components/ui/pdf-viewer";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface FieldPlacement {
@@ -143,13 +143,8 @@ export const FieldPlacementEditor = ({
           </span>
         </div>
 
-        <div className="relative border rounded-lg overflow-hidden">
-          <iframe
-            src={pdfUrl}
-            title="PDF Template"
-            className="w-full pointer-events-none"
-            style={{ height: "60vh", minHeight: "400px" }}
-          />
+        <div className="relative border rounded-lg overflow-hidden h-[60vh] min-h-[400px]">
+          <PdfViewer file={pdfUrl} />
           {/* Transparent overlay for drawing */}
           <div
             ref={overlayRef}
