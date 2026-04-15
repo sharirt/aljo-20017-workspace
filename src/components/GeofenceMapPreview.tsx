@@ -127,7 +127,7 @@ export const GeofenceMapPreview = ({
   if (!hasValidCoords) {
     return (
       <div
-        className="rounded-lg border overflow-hidden bg-muted/30 flex flex-col items-center justify-center gap-2"
+        className="relative isolate z-0 rounded-lg border overflow-hidden bg-muted/30 flex flex-col items-center justify-center gap-2"
         style={{ height }}
       >
         <MapPin className="text-muted-foreground" />
@@ -139,8 +139,11 @@ export const GeofenceMapPreview = ({
   }
 
   return (
-    <div className="rounded-lg border overflow-hidden" style={{ height }}>
-      <div ref={mapContainerRef} className="w-full h-full" />
+    <div
+      className="relative isolate z-0 rounded-lg border overflow-hidden"
+      style={{ height }}
+    >
+      <div ref={mapContainerRef} className="h-full w-full" />
     </div>
   );
 };
