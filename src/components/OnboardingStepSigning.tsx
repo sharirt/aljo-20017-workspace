@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   useEntityGetAll,
   useExecuteAction,
@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface OnboardingStepSigningProps {
   staffProfileId: string;
@@ -46,9 +45,8 @@ export const OnboardingStepSigning = ({
   onNext,
   onBack,
 }: OnboardingStepSigningProps) => {
-  const [sending, setSending] = useState(false);
+  const [sendingIds, setSendingIds] = useState<Set<string>>(new Set());
   const [polling, setPolling] = useState(false);
-  const sentRef = useRef(false);
 
   const { data: allTemplates } = useEntityGetAll(ContractTemplatesEntity);
   const {
@@ -68,45 +66,6 @@ export const OnboardingStepSigning = ({
     (t) => t.isActive
   );
   const requests = (signatureRequests as RequestWithId[]) || [];
-
-  // Send signature requests for templates that don't have one yet
-  useEffect(() => {
-    if (!staffProfileId || !activeTemplates.length || sending || sentRef.current) return;
-
-    const missing = activeTemplates.filter(
-      (t) => !requests.some((r) => r.contractTemplateId === t.id)
-    );
-
-    if (missing.length === 0) {
-      sentRef.current = true;
-      return;
-    }
-
-    const sendAll = async () => {
-      setSending(true);
-      for (const template of missing) {
-        if (!template.docusealTemplateId) continue;
-        try {
-          await sendSignature({
-            staffProfileId,
-            staffEmail,
-            staffName,
-            contractTemplateId: template.id,
-            contractTemplateName: template.name || "Contract",
-            docusealTemplateId: template.docusealTemplateId,
-            roleName: template.roleName || "Staff",
-          });
-        } catch {
-          // skip failures silently
-        }
-      }
-      sentRef.current = true;
-      setSending(false);
-      refetchRequests();
-    };
-
-    sendAll();
-  }, [staffProfileId, activeTemplates.length, requests.length]);
 
   // Poll for updates every 10 seconds
   useEffect(() => {
@@ -130,6 +89,31 @@ export const OnboardingStepSigning = ({
   const getRequestForTemplate = (templateId: string) =>
     requests.find((r) => r.contractTemplateId === templateId);
 
+  const handleSendContract = async (template: TemplateWithId) => {
+    if (!template.docusealTemplateId) return;
+    setSendingIds((prev) => new Set(prev).add(template.id));
+    try {
+      await sendSignature({
+        staffProfileId,
+        staffEmail,
+        staffName,
+        contractTemplateId: template.id,
+        contractTemplateName: template.name || "Contract",
+        docusealTemplateId: template.docusealTemplateId,
+        roleName: template.roleName || "Staff",
+      });
+      refetchRequests();
+    } catch {
+      // skip failures silently
+    } finally {
+      setSendingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(template.id);
+        return next;
+      });
+    }
+  };
+
   const getStatusBadge = (status?: string) => {
     switch (status) {
       case "pending":
@@ -151,9 +135,7 @@ export const OnboardingStepSigning = ({
           <Badge className="bg-destructive/20 text-destructive">Rejected</Badge>
         );
       default:
-        return (
-          <Badge className="bg-muted text-muted-foreground">Preparing</Badge>
-        );
+        return null;
     }
   };
 
@@ -174,14 +156,7 @@ export const OnboardingStepSigning = ({
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-4">
-          {sending ? (
-            <div className="flex items-center justify-center gap-3 py-8">
-              <Loader2 className="animate-spin text-primary" />
-              <span className="text-muted-foreground">
-                Preparing your contracts...
-              </span>
-            </div>
-          ) : noContracts ? (
+          {noContracts ? (
             <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/50 p-4">
               <Info className="shrink-0 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">
@@ -192,6 +167,7 @@ export const OnboardingStepSigning = ({
             activeTemplates.map((template) => {
               const req = getRequestForTemplate(template.id);
               const status = req?.status;
+              const isSending = sendingIds.has(template.id);
 
               return (
                 <div
@@ -206,6 +182,26 @@ export const OnboardingStepSigning = ({
                   </div>
 
                   <div className="mt-3">
+                    {!status && (
+                      <Button
+                        className="h-12 w-full"
+                        disabled={isSending}
+                        onClick={() => handleSendContract(template)}
+                      >
+                        {isSending ? (
+                          <>
+                            <Loader2 data-icon="inline-start" className="animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <FileSignature data-icon="inline-start" />
+                            Send Contract
+                          </>
+                        )}
+                      </Button>
+                    )}
+
                     {status === "pending" && (
                       <div className="flex flex-col gap-2">
                         <p className="text-sm text-muted-foreground">
@@ -268,13 +264,6 @@ export const OnboardingStepSigning = ({
                         )}
                       </div>
                     )}
-
-                    {!status && !sending && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Loader2 className="shrink-0 animate-spin" />
-                        Preparing...
-                      </div>
-                    )}
                   </div>
                 </div>
               );
@@ -282,7 +271,7 @@ export const OnboardingStepSigning = ({
           )}
 
           {/* Polling indicator */}
-          {polling && !sending && (
+          {polling && (
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <Loader2 className="size-3 animate-spin" />
               Checking for updates...
@@ -290,7 +279,7 @@ export const OnboardingStepSigning = ({
           )}
 
           {/* Help text when not all signed */}
-          {!allSignedOrApproved && !sending && !noContracts && (
+          {!allSignedOrApproved && !noContracts && (
             <p className="text-center text-sm text-muted-foreground">
               Waiting for you to sign all contracts above
             </p>
