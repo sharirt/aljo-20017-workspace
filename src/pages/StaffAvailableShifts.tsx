@@ -77,7 +77,7 @@ import { toast } from "sonner";
 import { AvailableShiftCard } from "@/components/AvailableShiftCard";
 import { ShiftTradesTab } from "@/components/ShiftTradesTab";
 import type { ApplicationStatusType } from "@/utils/countdownUtils";
-import { checkOrientationEligibility, getOrientationStatus } from "@/utils/orientationUtils";
+import { getOrientationStatus } from "@/utils/orientationUtils";
 import { getOrientationRequestStatus } from "@/utils/orientationActionUtils";
 import { useOrientationActions } from "@/hooks/useOrientationActions";
 import { ArrowLeftRight } from "lucide-react";
@@ -348,33 +348,9 @@ export default function StaffAvailableShiftsPage() {
         shiftId: selectedShift.id || "",
       });
 
-      // Orientation check: filter orientations for this shift's facility
-      const facilityOrientations = (staffOrientations || []).filter(
-        (o) => o.facilityId === selectedShift.facilityProfileId
-      );
-      const orientationCheck = checkOrientationEligibility(
-        selectedShift,
-        facilityOrientations
-      );
-
-      // Check if non-orientation reasons fail
-      const nonOrientationReasons = [...(eligibilityResult.reasons || [])];
-      const hasNonOrientationFailure = !eligibilityResult.eligible && nonOrientationReasons.length > 0;
-
-      // Check orientation failure separately
-      const hasOrientationFailure = !orientationCheck.passed;
-
-      if (hasNonOrientationFailure) {
-        // Non-orientation eligibility failure — show error in modal
+      if (!eligibilityResult.eligible) {
         setErrorMessage("You are not eligible to claim this shift:");
-        setErrorReasons(nonOrientationReasons);
-        return;
-      }
-
-      if (hasOrientationFailure) {
-        // Orientation-only failure — show orientation blocked state
-        setErrorMessage("orientation_required");
-        setErrorReasons([]);
+        setErrorReasons(eligibilityResult.reasons || []);
         return;
       }
 
@@ -418,7 +394,7 @@ export default function StaffAvailableShiftsPage() {
     } catch {
       toast.error("Failed to claim shift. Please try again.");
     }
-  }, [selectedShift, staffProfile, staffOrientations, checkEligibility, createApplication, updateShift, refetchApplications, refetchShifts, navigate]);
+  }, [selectedShift, staffProfile, checkEligibility, createApplication, updateShift, refetchApplications, refetchShifts, navigate]);
 
   // Re-apply for shift (rejected/withdrawn) — auto-approve flow
   const handleClaimAgain = useCallback(async (shiftId: string, e: React.MouseEvent) => {
@@ -435,21 +411,7 @@ export default function StaffAvailableShiftsPage() {
         shiftId: shiftId,
       });
 
-      // Orientation check
-      let orientationCheck = { passed: true, reason: undefined as string | undefined };
-      if (shiftToApply) {
-        const facilityOrientations = (staffOrientations || []).filter(
-          (o) => o.facilityId === shiftToApply.facilityProfileId
-        );
-        orientationCheck = checkOrientationEligibility(
-          shiftToApply,
-          facilityOrientations
-        );
-      }
-
-      const isEligible = eligibilityResult.eligible && orientationCheck.passed;
-
-      if (isEligible) {
+      if (eligibilityResult.eligible) {
         await createApplication({
           data: {
             staffProfileId: staffProfile.id,
@@ -481,10 +443,7 @@ export default function StaffAvailableShiftsPage() {
         await refetchShifts();
         toast.success("Shift claimed! ✓");
       } else {
-        const reasons = [...(eligibilityResult.reasons || [])];
-        if (!orientationCheck.passed && orientationCheck.reason) {
-          reasons.push(orientationCheck.reason);
-        }
+        const reasons = eligibilityResult.reasons || [];
         toast.error(reasons[0] || "You are not eligible for this shift.");
       }
     } catch {
@@ -492,7 +451,7 @@ export default function StaffAvailableShiftsPage() {
     } finally {
       setApplyingAgain(false);
     }
-  }, [staffProfile, openShifts, staffOrientations, checkEligibility, createApplication, updateShift, refetchApplications, refetchShifts]);
+  }, [staffProfile, openShifts, checkEligibility, createApplication, updateShift, refetchApplications, refetchShifts]);
 
   const handleRequestOrientation = useCallback(async () => {
     if (!staffProfile?.id || !selectedShift?.facilityProfileId || !user.email) return;
@@ -559,8 +518,6 @@ export default function StaffAvailableShiftsPage() {
   const selectedShiftShowFilled = selectedShift ? (selectedShift.headcount != null && selectedShift.headcount > 1) : false;
   const selectedOrientationStatus = selectedShift ? getOrientationStatus(selectedShift, orientedFacilitySet) : "not_required";
 
-  // Check if orientation error is the blocking reason
-  const isOrientationBlocked = errorMessage === "orientation_required";
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -957,7 +914,7 @@ export default function StaffAvailableShiftsPage() {
               </div>
             )}
 
-            {errorMessage && errorMessage !== "orientation_required" && errorReasons.length > 0 && (
+            {errorMessage && errorReasons.length > 0 && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
@@ -1056,41 +1013,6 @@ export default function StaffAvailableShiftsPage() {
                   <Ban className="w-6 h-6" />
                   Fully Booked
                 </Badge>
-                <button
-                  onClick={() => setShowShiftModal(false)}
-                  className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Close
-                </button>
-              </>
-            ) : isOrientationBlocked ? (
-              <>
-                <div className="bg-chart-3/10 border border-chart-3/20 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <GraduationCap className="w-6 h-6 text-chart-3 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="font-medium text-chart-3">This shift requires facility orientation</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        You need to complete an orientation at this facility before you can claim this shift.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full h-12 text-base"
-                  onClick={handleRequestOrientation}
-                  disabled={isRequestingOrientation}
-                >
-                  {isRequestingOrientation ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Requesting...
-                    </>
-                  ) : (
-                    "Request Orientation"
-                  )}
-                </Button>
                 <button
                   onClick={() => setShowShiftModal(false)}
                   className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"

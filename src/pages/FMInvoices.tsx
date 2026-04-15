@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 import {
   InvoicesEntity,
-  FacilitiesEntity,
+  FacilitiesEntity, FacilityManagerProfilesEntity,
 } from "@/product-types";
 import { useFacilitySwitcher } from "@/hooks/useFacilitySwitcher";
 
