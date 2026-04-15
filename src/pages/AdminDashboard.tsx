@@ -48,13 +48,6 @@ import { getPageUrl, cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getRoleBadgeColor } from "@/utils/shiftUtils";
 import { getCurrentPayPeriod, getPayPeriodLabel } from "@/utils/reportUtils";
-import {
-  validatePayPeriodBoundary,
-  countExistingTimesheets,
-  buildDuplicateErrorMessage,
-  computePeriodLabel,
-  computePeriodNumber,
-} from "@/utils/payrollUtils";
 import { AdminStaffManagementPage as AdminStaffManagementPageConfig } from "@/product-types";
 import { useGeneratePayroll } from "@/hooks/useGeneratePayroll";
 
@@ -164,21 +157,18 @@ export default function AdminDashboardPage() {
       return;
     }
 
-    // Client-side anchor-based pay period validation
-    const validationError = validatePayPeriodBoundary(periodStart, periodEnd);
-    if (validationError) {
-      toast.error(validationError);
+    // Simple date validation
+    if (periodEnd < periodStart) {
+      toast.error("Period end date must be after start date");
       return;
     }
 
     // Client-side duplicate prevention check
-    const existingCount = countExistingTimesheets(
-      timesheets || [],
-      periodStart,
-      periodEnd
-    );
+    const existingCount = (timesheets || []).filter(
+      (ts) => ts.periodStart === periodStart && ts.periodEnd === periodEnd
+    ).length;
     if (existingCount > 0) {
-      toast.error(buildDuplicateErrorMessage(existingCount, periodStart, periodEnd));
+      toast.error(`Payroll already generated for this period (${existingCount} timesheets exist)`);
       return;
     }
 
@@ -194,9 +184,13 @@ export default function AdminDashboardPage() {
         return;
       }
 
-      // Compute enhanced output fields from the validated period
-      const periodLabel = computePeriodLabel(periodStart, periodEnd);
-      const periodNumber = computePeriodNumber(periodStart);
+      // Compute enhanced output fields
+      const startDate = parseISO(periodStart);
+      const endDate = parseISO(periodEnd);
+      const periodLabel = `${format(startDate, "MMM d")} – ${format(endDate, "MMM d, yyyy")}`;
+      const anchorDate = new Date(2025, 0, 6);
+      const daysSinceAnchor = Math.round((startDate.getTime() - anchorDate.getTime()) / (24 * 60 * 60 * 1000));
+      const periodNumber = daysSinceAnchor >= 0 ? Math.floor(daysSinceAnchor / 14) + 1 : 1;
 
       const earlyPayMessage =
         result.totalEarlyPayDeducted > 0
@@ -211,7 +205,6 @@ export default function AdminDashboardPage() {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to generate payroll";
       toast.error(message);
-      console.error(error);
     }
   };
 
