@@ -61,6 +61,7 @@ export const UploadTemplateDialog = ({
   const [fields, setFields] = useState<FieldPlacement[]>(editTemplate?.fields || []);
   const [pdfSignedUrl, setPdfSignedUrl] = useState<string>("");
   const [templateRecordId, setTemplateRecordId] = useState<string>(editTemplate?.id || "");
+  const [templateDocusealId, setTemplateDocusealId] = useState<number | null>(null);
 
   // Step 3 state
   const [saving, setSaving] = useState(false);
@@ -83,6 +84,7 @@ export const UploadTemplateDialog = ({
       setFields(editTemplate?.fields || []);
       setPdfSignedUrl("");
       setTemplateRecordId(editTemplate?.id || "");
+      setTemplateDocusealId(null);
       setSaving(false);
       setSaved(false);
     }
@@ -136,6 +138,9 @@ export const UploadTemplateDialog = ({
       const created = result?.items?.[0];
       if (created?.id) {
         setTemplateRecordId(created.id);
+        if (created.docusealTemplateId) {
+          setTemplateDocusealId(created.docusealTemplateId);
+        }
         // Get signed URL for the PDF
         const signedResult = await getSignedUrl({ fileUrl });
         if (signedResult?.signedUrl) {
@@ -159,6 +164,7 @@ export const UploadTemplateDialog = ({
       await updateTemplate({
         id: templateRecordId,
         data: {
+          ...(templateDocusealId ? { docusealTemplateId: templateDocusealId } : {}),
           fields: {
             items: fields.map((f) => ({
               id: f.id,
