@@ -1,4 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,9 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PdfViewer } from "@/components/ui/pdf-viewer";
-import { X } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 export interface FieldPlacement {
   id: string;
@@ -56,6 +60,7 @@ export const FieldPlacementEditor = ({
   roleName,
 }: FieldPlacementEditorProps) => {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [drawing, setDrawing] = useState<{
     startX: number;
     startY: number;
@@ -63,10 +68,29 @@ export const FieldPlacementEditor = ({
     currentY: number;
   } | null>(null);
   const [selectedType, setSelectedType] = useState<string>("signature");
-  const [currentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [numPages, setNumPages] = useState(0);
+  const [pdfLoading, setPdfLoading] = useState(true);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const generateId = () =>
     `field_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+
+  const onDocumentLoadSuccess = ({ numPages: total }: { numPages: number }) => {
+    setNumPages(total);
+    setPdfLoading(false);
+  };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!overlayRef.current) return;
@@ -122,81 +146,128 @@ export const FieldPlacementEditor = ({
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row">
-      {/* PDF viewer with overlay */}
+      {/* PDF area */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-sm font-medium">Field type:</span>
-          <Select value={selectedType} onValueChange={setSelectedType}>
-            <SelectTrigger className="w-36 h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {FIELD_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <span className="text-xs text-muted-foreground ml-2">
-            Click and drag on PDF to place fields
-          </span>
+        {/* Toolbar */}
+        <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Field type:</span>
+            <Select value={selectedType} onValueChange={setSelectedType}>
+              <SelectTrigger className="w-36 h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {FIELD_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              Click and drag to place fields
+            </span>
+          </div>
+          {numPages > 0 && (
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 w-8 p-0"
+                disabled={currentPage <= 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft />
+              </Button>
+              <span className="text-xs text-muted-foreground min-w-[80px] text-center">
+                Page {currentPage} of {numPages}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 w-8 p-0"
+                disabled={currentPage >= numPages}
+                onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
+              >
+                <ChevronRight />
+              </Button>
+            </div>
+          )}
         </div>
 
-        <div className="relative border rounded-lg overflow-hidden h-[60vh] min-h-[400px]">
-          <PdfViewer file={pdfUrl} />
-          {/* Transparent overlay for drawing */}
-          <div
-            ref={overlayRef}
-            className="absolute inset-0 cursor-crosshair"
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={() => drawing && handleMouseUp()}
+        {/* PDF + overlay container */}
+        <div ref={containerRef} className="border rounded-lg overflow-hidden bg-muted">
+          {pdfLoading && (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="size-8 animate-spin text-muted-foreground" />
+            </div>
+          )}
+          <Document
+            file={pdfUrl}
+            onLoadSuccess={onDocumentLoadSuccess}
+            loading={null}
           >
-            {/* Placed fields */}
-            {fields
-              .filter((f) => f.page === currentPage)
-              .map((field) => (
-                <div
-                  key={field.id}
-                  className={cn(
-                    "absolute border-2 rounded-sm flex items-center justify-between px-1",
-                    FIELD_TYPE_COLORS[field.type] || "bg-primary/30 border-primary"
-                  )}
-                  style={{
-                    left: `${field.x * 100}%`,
-                    top: `${field.y * 100}%`,
-                    width: `${field.w * 100}%`,
-                    height: `${field.h * 100}%`,
-                  }}
-                >
-                  <span className="text-[10px] font-medium truncate text-foreground">
-                    {field.type}
-                  </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteField(field.id);
-                    }}
-                    className="shrink-0 rounded-full bg-destructive/80 p-0.5 text-destructive-foreground hover:bg-destructive"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-
-            {/* Drawing box */}
-            {drawingBox && (
-              <div
-                className={cn(
-                  "absolute border-2 border-dashed rounded-sm",
-                  FIELD_TYPE_COLORS[selectedType] || "bg-primary/30 border-primary"
-                )}
-                style={drawingBox}
+            <div className="relative">
+              <Page
+                pageNumber={currentPage}
+                width={containerWidth || undefined}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
               />
-            )}
-          </div>
+              {/* Drawing overlay — sits exactly on top of the rendered page */}
+              <div
+                ref={overlayRef}
+                className="absolute inset-0 cursor-crosshair"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={() => drawing && handleMouseUp()}
+              >
+                {/* Placed fields for current page */}
+                {fields
+                  .filter((f) => f.page === currentPage)
+                  .map((field) => (
+                    <div
+                      key={field.id}
+                      className={cn(
+                        "absolute border-2 rounded-sm flex items-center justify-between px-1",
+                        FIELD_TYPE_COLORS[field.type] || "bg-primary/30 border-primary"
+                      )}
+                      style={{
+                        left: `${field.x * 100}%`,
+                        top: `${field.y * 100}%`,
+                        width: `${field.w * 100}%`,
+                        height: `${field.h * 100}%`,
+                      }}
+                    >
+                      <span className="text-[10px] font-medium truncate text-foreground">
+                        {field.type}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteField(field.id);
+                        }}
+                        className="shrink-0 rounded-full bg-destructive/80 p-0.5 text-destructive-foreground hover:bg-destructive"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </div>
+                  ))}
+
+                {/* Drawing preview box */}
+                {drawingBox && (
+                  <div
+                    className={cn(
+                      "absolute border-2 border-dashed rounded-sm",
+                      FIELD_TYPE_COLORS[selectedType] || "bg-primary/30 border-primary"
+                    )}
+                    style={drawingBox}
+                  />
+                )}
+              </div>
+            </div>
+          </Document>
         </div>
       </div>
 
@@ -233,10 +304,10 @@ export const FieldPlacementEditor = ({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-7 w-7 p-0"
+                    className="size-7 p-0"
                     onClick={() => handleDeleteField(field.id)}
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="size-3.5" />
                   </Button>
                 </div>
               ))
