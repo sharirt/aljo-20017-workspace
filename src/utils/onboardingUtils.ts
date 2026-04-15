@@ -1,5 +1,6 @@
 import type { IStaffProfilesEntity, StaffDocumentsEntityDocumentTypeEnum, IStaffDocumentsEntity } from "@/product-types";
 import { isPast, parseISO } from "date-fns";
+import { getRequiredDocTypesForRole, DOCUMENT_TYPE_LABELS } from "@/utils/documentUtils";
 
 /**
  * Required profile fields for onboarding Step 1
@@ -18,47 +19,8 @@ export const REQUIRED_PROFILE_FIELDS: {
   { key: "emergencyContactPhone", label: "Emergency Contact Phone" },
 ];
 
-/**
- * Base documents required for all roles
- */
-const BASE_DOCUMENTS: StaffDocumentsEntityDocumentTypeEnum[] = [
-  "government_id",
-  "background_check",
-  "tb_test",
-  "covid_vaccination",
-];
-
-/**
- * Additional documents per role type
- */
-const ROLE_ADDITIONAL_DOCUMENTS: Record<string, StaffDocumentsEntityDocumentTypeEnum[]> = {
-  RN: ["nursing_license", "cpr_certification"],
-  LPN: ["nursing_license", "cpr_certification"],
-  CCA: ["cpr_certification"],
-  CITR: [],
-};
-
-/**
- * Human-readable labels for document types
- */
-export const DOCUMENT_TYPE_LABELS: Record<StaffDocumentsEntityDocumentTypeEnum, string> = {
-  government_id: "Government ID",
-  background_check: "Background Check",
-  tb_test: "TB Test",
-  covid_vaccination: "COVID Vaccination",
-  nursing_license: "Nursing License",
-  cpr_certification: "CPR Certification",
-};
-
-/**
- * Get required documents for a given role type
- */
-export function getRequiredDocuments(
-  roleType?: string
-): StaffDocumentsEntityDocumentTypeEnum[] {
-  const additional = ROLE_ADDITIONAL_DOCUMENTS[roleType || ""] || [];
-  return [...BASE_DOCUMENTS, ...additional];
-}
+// Re-export DOCUMENT_TYPE_LABELS from documentUtils for backward compatibility
+export { DOCUMENT_TYPE_LABELS } from "@/utils/documentUtils";
 
 /**
  * Check how many required profile fields are filled
@@ -94,7 +56,7 @@ export function getDocumentCompletion(
   allUploaded: boolean;
   documentStatuses: { type: StaffDocumentsEntityDocumentTypeEnum; label: string; status: WizardDocumentStatus }[];
 } {
-  const requiredDocTypes = getRequiredDocuments(roleType);
+  const requiredDocTypes = getRequiredDocTypesForRole(roleType);
   const total = requiredDocTypes.length;
 
   // Filter to only required documents for compliance evaluation
@@ -108,7 +70,7 @@ export function getDocumentCompletion(
     }
     return {
       type: docType,
-      label: DOCUMENT_TYPE_LABELS[docType],
+      label: DOCUMENT_TYPE_LABELS[docType] || docType,
       status,
     };
   });
@@ -200,14 +162,6 @@ export function getEffectiveDocumentStatus(doc: IStaffDocumentsEntity): WizardDo
 
 /**
  * Calculate compliance status for a staff member based ONLY on required documents.
- *
- * Rules:
- * - "compliant": ALL required documents for the staff's role are approved (and not expired)
- * - "not_compliant" / "pending": Any required document is missing, rejected, or expired
- * - Optional documents (isRequired === false) NEVER affect compliance status
- * - Documents with isRequired === null/undefined are treated as required (backward compatibility)
- *
- * Returns the computed compliance status and details for each required document.
  */
 export function calculateComplianceStatus(
   roleType?: string,
@@ -225,7 +179,7 @@ export function calculateComplianceStatus(
     status: WizardDocumentStatus;
   }>;
 } {
-  const requiredDocTypes = getRequiredDocuments(roleType);
+  const requiredDocTypes = getRequiredDocTypesForRole(roleType);
   const totalRequired = requiredDocTypes.length;
 
   // Only consider required documents (isRequired !== false)
@@ -239,7 +193,7 @@ export function calculateComplianceStatus(
     }
     return {
       type: docType,
-      label: DOCUMENT_TYPE_LABELS[docType],
+      label: DOCUMENT_TYPE_LABELS[docType] || docType,
       status,
     };
   });

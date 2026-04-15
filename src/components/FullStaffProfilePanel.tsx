@@ -521,12 +521,35 @@ export const FullStaffProfilePanel = ({
     return docBlockers.length === 0 && fieldBlockers.length === 0 && !hasUnapprovedContracts;
   }, [staff, staffDocuments, signatureRequestsData]);
 
+  const allRequiredDocsApproved = useMemo(() => {
+    const requiredDocTypes = getRequiredDocTypesForRole(staff?.roleType);
+    return requiredDocTypes.every(
+      (docType) => getDocStatusForType(docType, staffDocuments) === "approved"
+    );
+  }, [staff?.roleType, staffDocuments]);
+
+  const showMarkCompliant = allRequiredDocsApproved && staff?.complianceStatus !== "compliant";
+
+  const handleMarkCompliant = useCallback(async () => {
+    if (!staff?.id) return;
+    try {
+      await updateStaff({
+        id: staff.id,
+        data: { complianceStatus: "compliant" },
+      });
+      toast.success("Compliance status updated to Compliant");
+      onRefresh?.();
+    } catch {
+      toast.error("Failed to update compliance status");
+    }
+  }, [updateStaff, staff, onRefresh]);
+
   const handleApproveOnboarding = useCallback(async () => {
     if (!staff?.id) return;
     try {
       await updateStaff({
         id: staff.id,
-        data: { onboardingStatus: "approved" },
+        data: { onboardingStatus: "approved", complianceStatus: "compliant" },
       });
       toast.success(
         `Onboarding approved! ${staffName} can now claim shifts.`
@@ -1179,14 +1202,30 @@ export const FullStaffProfilePanel = ({
         {showOnboardingApproval && (
           <Card>
             <CardContent className="p-6">
-              <Button
-                onClick={() => setApprovalDialogOpen(true)}
-                disabled={!canApproveOnboarding || updatingStaff}
-                className="w-full h-12"
-              >
-                <CheckCircle className="h-5 w-5 mr-1" />
-                Approve Onboarding
-              </Button>
+              <div className="flex flex-col gap-3">
+                {showMarkCompliant && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1.5">Compliance Status</p>
+                    <Button
+                      variant="outline"
+                      onClick={handleMarkCompliant}
+                      disabled={updatingStaff}
+                      className="w-full h-11 border-accent text-accent hover:bg-accent/10"
+                    >
+                      <CheckCircle data-icon="inline-start" />
+                      Mark as Compliant
+                    </Button>
+                  </div>
+                )}
+                <Button
+                  onClick={() => setApprovalDialogOpen(true)}
+                  disabled={!canApproveOnboarding || updatingStaff}
+                  className="w-full h-12"
+                >
+                  <CheckCircle data-icon="inline-start" />
+                  Approve Onboarding
+                </Button>
+              </div>
               {!canApproveOnboarding && (() => {
                 const requiredDocTypes = getRequiredDocTypesForRole(staff?.roleType);
                 const docBlockers = requiredDocTypes.filter((docType) => {
