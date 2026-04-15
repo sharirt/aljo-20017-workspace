@@ -9,7 +9,7 @@ import {
   GetSignedFileUrlAction,
   ApproveSignatureRequestActionAction,
   RejectSignatureRequestActionAction,
-  ResendSignatureRequestActionAction,
+  SendContractToStaffAction,
   ContractTemplatesEntity,
 } from "@/product-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,7 +61,7 @@ export const ContractSignaturesSection = ({
 
   const { executeFunction: approveSignature } = useExecuteAction(ApproveSignatureRequestActionAction);
   const { executeFunction: rejectSignature } = useExecuteAction(RejectSignatureRequestActionAction);
-  const { executeFunction: resendSignature } = useExecuteAction(ResendSignatureRequestActionAction);
+  const { executeFunction: resendSignature } = useExecuteAction(SendContractToStaffAction);
   const { executeFunction: getSignedUrl } = useExecuteAction(GetSignedFileUrlAction);
 
   const { data: templates } = useEntityGetAll(ContractTemplatesEntity);
@@ -104,19 +104,17 @@ export const ContractSignaturesSection = ({
   };
 
   const handleResend = async (request: typeof SignatureRequestsEntity.instanceType & { id: string }) => {
-    const template = templates?.find((t: any) => t.id === request.contractTemplateId);
-    if (!request.docusealTemplateId) {
-      toast.error("Missing template ID");
+    if (!request.contractTemplateId) {
+      toast.error("Missing contract template");
       return;
     }
     setActionLoadingId(request.id);
     try {
       await resendSignature({
-        signatureRequestId: request.id,
+        staffProfileId,
         staffEmail: request.staffEmail || staffEmail,
         staffName: request.staffName || staffName,
-        docusealTemplateId: request.docusealTemplateId,
-        roleName: template?.roleName || "Staff",
+        contractTemplateId: request.contractTemplateId,
       });
       toast.success("Signature request re-sent");
     } catch {

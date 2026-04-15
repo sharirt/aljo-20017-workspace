@@ -2847,6 +2847,95 @@ export const ScheduleOrientationShiftAction = {
 } as const;
 
 /**
+ * SendContractToStaff input payload
+ */
+export interface ISendContractToStaffActionInput {
+  /** FK to StaffProfiles.id  */
+  staffProfileId: string;
+  /** Staff member email  */
+  staffEmail: string;
+  /** Staff member full name  */
+  staffName: string;
+  /** Staff member phone number for SMS (optional, E.164 format)  */
+  staffPhone?: string;
+  /** FK to ContractTemplates.id  */
+  contractTemplateId: string;
+}
+
+export type SendContractToStaffActionOutputStatusEnum =
+  | "pending"
+  | "signed"
+  | "approved"
+  | "rejected";
+
+/**
+ * The item inserted into the table, keys are the column names, values are the column values
+ */
+export interface ISendContractToStaffActionOutputSendContractToStaffActionOutputItemsItemObject {
+  /** Item id  */
+  id?: string;
+  /** Item created at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  createdAt?: string;
+  /** Item updated at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  updatedAt?: string;
+  /** Item created by user id  */
+  createdBy?: string;
+  /** Item updated by user id  */
+  updatedBy?: string;
+  /** Item updated by agent id  */
+  updatedByAgentId?: string;
+  /** Item tenant id  */
+  tenantId?: string;
+  /** URL of the completed signed document PDF. Populated by the HandleSignatureCompleted action when the E-Signature Event webhook fires.  */
+  signedDocumentUrl?: string;
+  /** Current status of the signature request. pending=sent but not yet signed, signed=staff completed signing, approved=admin approved the signed doc, rejected=admin rejected and re-send may be needed.  */
+  status?: SendContractToStaffActionOutputStatusEnum;
+  /** Full name of the staff member at the time the request was sent. Denormalized for display.  */
+  staffName?: string;
+  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
+  staffEmail?: string;
+  /** Timestamp when the staff member completed signing. Populated by the HandleSignatureCompleted action.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  signedAt?: string;
+  /** Foreign key reference to StaffProfiles.id — the staff member who needs to sign  */
+  staffProfileId?: string;
+  /** Name of the contract template at the time of sending. Denormalized for display even if template is later renamed.  */
+  contractTemplateName?: string;
+  /** Email of the admin who approved or rejected this signed document.  */
+  reviewedByEmail?: string;
+  /** DocuSeal submission ID returned by Submit Prefilled Templates. Used to match incoming E-Signature Event webhook callbacks.  */
+  submissionId?: number;
+  /** The signing URL sent to the staff member. Can be shared directly if email/SMS delivery fails.  */
+  signingUrl?: string;
+  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
+  docusealTemplateId?: number;
+  /** Admin-provided reason for rejecting the signed document. Only populated when status=rejected.  */
+  rejectionReason?: string;
+  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
+  contractTemplateId?: string;
+  /** Timestamp when the signing request was sent to the staff member.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  sentAt?: string;
+}
+
+/**
+ * SendContractToStaff output payload
+ */
+export interface ISendContractToStaffActionOutput {
+  /** The items inserted into the table  */
+  items: ISendContractToStaffActionOutputSendContractToStaffActionOutputItemsItemObject[];
+}
+
+/**
+ * SendContractToStaffAction
+ * Sends a DocuSeal signing request to a staff member for a specific contract template. Steps: 1) Fetch contract template record from DB, 2) Get PDF as base64, 3) Upload PDF to DocuSeal as a template with field placements, 4) Create a signing submission, 5) Insert a SignatureRequests record, 6) Send email + SMS to staff with the signing link.
+ */
+export const SendContractToStaffAction = {
+  actionBlockId: "69dff27e781c3c119fe9cd75",
+
+  inputInstanceType: {} as ISendContractToStaffActionInput,
+  outputInstanceType: {} as ISendContractToStaffActionOutput,
+} as const;
+
+/**
  * SendSignatureRequestAction input payload
  */
 export interface ISendSignatureRequestActionActionInput {

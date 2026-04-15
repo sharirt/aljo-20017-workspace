@@ -139,6 +139,7 @@ export const OnboardingWizard = ({ staffProfile }: OnboardingWizardProps) => {
           staffProfileId={staffProfile.id}
           staffEmail={profileWithId?.email || staffProfile.email || ""}
           staffName={staffFullName}
+          staffPhone={(latestProfile as any)?.phone}
           onNext={handleNext}
           onBack={handleBack}
         />

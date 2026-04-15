@@ -6,7 +6,7 @@ import {
 import {
   ContractTemplatesEntity,
   SignatureRequestsEntity,
-  SendSignatureRequestActionAction,
+  SendContractToStaffAction,
 } from "@/product-types";
 import type { ISignatureRequestsEntity, IContractTemplatesEntity } from "@/product-types";
 import {
@@ -32,6 +32,7 @@ interface OnboardingStepSigningProps {
   staffProfileId: string;
   staffEmail: string;
   staffName: string;
+  staffPhone?: string;
   onNext: () => void;
   onBack: () => void;
 }
@@ -43,6 +44,7 @@ export const OnboardingStepSigning = ({
   staffProfileId,
   staffEmail,
   staffName,
+  staffPhone,
   onNext,
   onBack,
 }: OnboardingStepSigningProps) => {
@@ -61,7 +63,7 @@ export const OnboardingStepSigning = ({
   );
 
   const { executeFunction: sendSignature } = useExecuteAction(
-    SendSignatureRequestActionAction
+    SendContractToStaffAction
   );
 
   const activeTemplates = ((allTemplates as TemplateWithId[]) || []).filter(
@@ -85,16 +87,13 @@ export const OnboardingStepSigning = ({
     const sendAll = async () => {
       setSending(true);
       for (const template of missing) {
-        if (!template.docusealTemplateId) continue;
         try {
           await sendSignature({
             staffProfileId,
             staffEmail,
             staffName,
             contractTemplateId: template.id,
-            contractTemplateName: template.name || "Contract",
-            docusealTemplateId: template.docusealTemplateId,
-            roleName: template.roleName || "Staff",
+            ...(staffPhone ? { staffPhone } : {}),
           });
         } catch {
           // skip failures silently
