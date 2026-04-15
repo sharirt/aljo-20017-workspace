@@ -45,6 +45,7 @@ import { StaffCard } from "@/components/StaffCard";
 import { FullStaffProfilePanel } from "@/components/FullStaffProfilePanel";
 import { AvailabilityBadge } from "@/components/AvailabilityBadge";
 import { PendingUpgradeAlert } from "@/components/PendingUpgradeAlert";
+import { getRequiredDocTypesForRole } from "@/utils/documentUtils";
 
 export const pageIcon = "users";
 
@@ -79,16 +80,18 @@ export default function AdminStaffManagementPage() {
   const [onboardingFilter, setOnboardingFilter] = useState<string>("all");
   const [emailSearch, setEmailSearch] = useState("");
 
-  // Calculate document counts per staff
+  // Calculate document counts per staff: X required doc types uploaded / Y total required
   const documentCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    staffDocuments?.forEach((doc) => {
-      if (doc.staffProfileId) {
-        counts.set(doc.staffProfileId, (counts.get(doc.staffProfileId) || 0) + 1);
-      }
+    const counts = new Map<string, { uploaded: number; total: number }>();
+    staffProfiles?.forEach((staff: any) => {
+      const requiredTypes = getRequiredDocTypesForRole(staff.roleType);
+      const staffDocs = staffDocuments?.filter((d) => d.staffProfileId === staff.id) || [];
+      const uploadedTypes = new Set(staffDocs.map((d) => d.documentType).filter(Boolean));
+      const uploadedRequiredCount = requiredTypes.filter((t) => uploadedTypes.has(t)).length;
+      counts.set(staff.id, { uploaded: uploadedRequiredCount, total: requiredTypes.length });
     });
     return counts;
-  }, [staffDocuments]);
+  }, [staffDocuments, staffProfiles]);
 
   // Filter staff based on filters
   const filteredStaff = useMemo(() => {
@@ -334,7 +337,7 @@ export default function AdminStaffManagementPage() {
             <StaffCard
               key={staff.id}
               staff={staff}
-              documentCount={documentCounts.get(staff.id) || 0}
+              documentCount={documentCounts.get(staff.id) || { uploaded: 0, total: 0 }}
               onClick={() => handleStaffClick(staff.id)}
               getComplianceBadge={getComplianceBadge}
               getOnboardingBadge={getOnboardingBadge}
@@ -396,7 +399,7 @@ export default function AdminStaffManagementPage() {
                   <TableCell>
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <FileText className="h-4 w-4" />
-                      {documentCounts.get(staff.id) || 0}
+                      {documentCounts.get(staff.id)?.uploaded ?? 0} / {documentCounts.get(staff.id)?.total ?? 0}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -421,7 +424,7 @@ export default function AdminStaffManagementPage() {
             <FullStaffProfilePanel
               staffId={selectedStaffId}
               staffDocuments={selectedStaffDocs}
-              showOnboardingApproval={false}
+              showOnboardingApproval={true}
               onRefresh={handleRefresh}
               onSheetClose={handleSheetClose}
             />

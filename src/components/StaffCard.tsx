@@ -14,7 +14,7 @@ import { FileText, ChevronRight, AlertTriangle } from "lucide-react";
 
 interface StaffCardProps {
   staff: typeof StaffProfilesEntity['instanceType'];
-  documentCount: number;
+  documentCount: { uploaded: number; total: number };
   onClick: () => void;
   getComplianceBadge: (status?: string) => React.ReactNode;
   getOnboardingBadge: (status?: string) => React.ReactNode;
@@ -65,7 +65,7 @@ export function StaffCard({
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <FileText className="h-4 w-4" />
-              <span>{documentCount} document{documentCount !== 1 ? 's' : ''}</span>
+              <span>{documentCount.uploaded} / {documentCount.total}</span>
             </div>
             <ChevronRight className="h-5 w-5" />
           </div>
