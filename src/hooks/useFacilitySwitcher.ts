@@ -6,6 +6,17 @@ function getStorageKey(email: string) {
   return `aljo_active_facility_id_${email}`;
 }
 
+const FACILITY_CHANGED_EVENT = "aljo_facility_changed";
+
+type FacilityChangedDetail = {
+  facilityId?: string;
+};
+
+function readFacilityIdFromChangedEvent(event: Event): string | null {
+  const detail = (event as CustomEvent<FacilityChangedDetail>).detail?.facilityId;
+  return typeof detail === "string" && detail ? detail : null;
+}
+
 export function useFacilitySwitcher(userEmail: string, isAuthenticated: boolean) {
   const { data: allProfiles, isLoading: loadingProfiles } = useEntityGetAll(
     FacilityManagerProfilesEntity,
@@ -40,12 +51,38 @@ export function useFacilitySwitcher(userEmail: string, isAuthenticated: boolean)
     }
   }, [allProfiles, userEmail]);
 
+  // Keep every hook instance (layout + FM pages) in sync when facility changes elsewhere
+  useEffect(() => {
+    if (!userEmail) return;
+
+    const handler = (event: Event) => {
+      if (!allProfiles?.length) return;
+
+      const fromDetail = readFacilityIdFromChangedEvent(event);
+      const fromStorage = localStorage.getItem(getStorageKey(userEmail));
+      const candidate = fromDetail ?? fromStorage;
+      if (!candidate) return;
+
+      const profileIds = allProfiles.map((p: any) => p.facilityProfileId).filter(Boolean);
+      if (!profileIds.includes(candidate)) return;
+
+      setActiveFacilityIdState(candidate);
+    };
+
+    window.addEventListener(FACILITY_CHANGED_EVENT, handler);
+    return () => window.removeEventListener(FACILITY_CHANGED_EVENT, handler);
+  }, [userEmail, allProfiles]);
+
   const setActiveFacilityId = (id: string) => {
     setActiveFacilityIdState(id);
     if (userEmail) {
       localStorage.setItem(getStorageKey(userEmail), id);
     }
-    window.dispatchEvent(new CustomEvent("aljo_facility_changed"));
+    window.dispatchEvent(
+      new CustomEvent<FacilityChangedDetail>(FACILITY_CHANGED_EVENT, {
+        detail: { facilityId: id },
+      })
+    );
   };
 
   const activeProfile = allProfiles?.find(
