@@ -21,13 +21,17 @@ import type {
 } from "@/product-types";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarCheck, ClipboardList } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CalendarCheck, ClipboardList, LayoutGrid, List } from "lucide-react";
 import { parseISO } from "date-fns";
 import { AdminShiftCard } from "@/components/AdminShiftCard";
+import { AdminShiftListView } from "@/components/AdminShiftListView";
 import { AssignStaffModal } from "@/components/AssignStaffModal";
 import { UnassignConfirmDialog } from "@/components/UnassignConfirmDialog";
 import { AdminShiftFilters, type ShiftFiltersState } from "@/components/AdminShiftFilters";
 import { getStaffDisplayName } from "@/utils/shiftApplicationUtils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 type ShiftWithId = IShiftsEntity & { id: string };
 type FacilityWithId = IFacilitiesEntity & { id: string };
@@ -37,6 +41,10 @@ type TimeLogWithId = ITimeLogsEntity & { id: string };
 
 export default function AdminShiftManagement() {
   const user = useUser();
+  const isMobile = useIsMobile();
+
+  // View toggle state
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Data fetching
   const {
@@ -126,17 +134,11 @@ export default function AdminShiftManagement() {
   // Filtered shifts
   const filteredShifts = useMemo(() => {
     return shifts.filter((shift) => {
-      // Status filter
       if (filters.status !== "all" && shift.status !== filters.status) return false;
-
-      // Facility filter
       if (filters.facilityId !== "all" && shift.facilityProfileId !== filters.facilityId)
         return false;
-
-      // Role filter
       if (filters.role !== "all" && shift.requiredRole !== filters.role) return false;
 
-      // Date range filter
       if (filters.startDate && shift.startDateTime) {
         try {
           const shiftDate = parseISO(shift.startDateTime);
@@ -174,7 +176,6 @@ export default function AdminShiftManagement() {
       const aOrder = statusOrder[a.status || ""] ?? 99;
       const bOrder = statusOrder[b.status || ""] ?? 99;
       if (aOrder !== bOrder) return aOrder - bOrder;
-      // Within same status, sort by date descending (newest first)
       const aDate = a.startDateTime || "";
       const bDate = b.startDateTime || "";
       return bDate.localeCompare(aDate);
@@ -246,23 +247,49 @@ export default function AdminShiftManagement() {
   const isLoading =
     isLoadingShifts || isLoadingFacilities || isLoadingStaff || isLoadingApplications;
 
-  // Get the facility for the assign modal
   const assignModalFacility = useMemo(() => {
     if (!selectedShift?.facilityProfileId) return undefined;
     return facilityMap.get(selectedShift.facilityProfileId);
   }, [selectedShift, facilityMap]);
 
+  // On mobile, always show grid
+  const effectiveViewMode = isMobile ? "grid" : viewMode;
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <CalendarCheck className="h-6 w-6" />
-          Shift Management
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          View all shifts and manually assign or unassign staff.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <CalendarCheck className="h-6 w-6" />
+            Shift Management
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            View all shifts and manually assign or unassign staff.
+          </p>
+        </div>
+
+        {/* View Toggle - hidden on mobile */}
+        {!isMobile && (
+          <div className="flex items-center rounded-lg border border-border bg-muted/30 p-0.5">
+            <Button
+              variant={viewMode === "grid" ? "default" : "ghost"}
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => setViewMode("grid")}
+            >
+              <LayoutGrid />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => setViewMode("list")}
+            >
+              <List />
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Filters */}
@@ -288,6 +315,13 @@ export default function AdminShiftManagement() {
             Adjust your filters to see shifts.
           </p>
         </div>
+      ) : effectiveViewMode === "list" ? (
+        /* List/Table View */
+        <AdminShiftListView
+          shifts={sortedShifts}
+          facilityMap={facilityMap}
+          onAssignStaff={handleOpenAssignModal}
+        />
       ) : (
         /* Shift Grid */
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
