@@ -52,10 +52,11 @@ export const OnboardingStepSigning = ({
   const [polling, setPolling] = useState(false);
   const sentRef = useRef(false);
 
-  const { data: allTemplates } = useEntityGetAll(ContractTemplatesEntity);
+  const { data: allTemplates, isLoading: isLoadingTemplates } = useEntityGetAll(ContractTemplatesEntity);
   const {
     data: signatureRequests,
     refetch: refetchRequests,
+    isLoading: isLoadingRequests,
   } = useEntityGetAll(
     SignatureRequestsEntity,
     { staffProfileId },
@@ -116,15 +117,18 @@ export const OnboardingStepSigning = ({
     return () => clearInterval(interval);
   }, [refetchRequests]);
 
-  const noContracts = activeTemplates.length === 0;
+  const isDataReady = !isLoadingTemplates && !isLoadingRequests && !sending;
+
+  const noContracts = isDataReady && activeTemplates.length === 0;
 
   const allSignedOrApproved =
-    noContracts ||
-    (activeTemplates.length > 0 &&
-      activeTemplates.every((t) => {
-        const req = requests.find((r) => r.contractTemplateId === t.id);
-        return req && req.status === "approved";
-      }));
+    isDataReady &&
+    (noContracts ||
+      (activeTemplates.length > 0 &&
+        activeTemplates.every((t) => {
+          const req = requests.find((r) => r.contractTemplateId === t.id);
+          return req && req.status === "approved";
+        })));
 
   const getRequestForTemplate = (templateId: string) =>
     requests.find((r) => r.contractTemplateId === templateId);
@@ -173,7 +177,14 @@ export const OnboardingStepSigning = ({
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-4">
-          {sending ? (
+          {!isDataReady && !sending ? (
+            <div className="flex items-center justify-center gap-3 py-8">
+              <Loader2 className="animate-spin text-primary" />
+              <span className="text-muted-foreground">
+                Loading contracts...
+              </span>
+            </div>
+          ) : sending ? (
             <div className="flex items-center justify-center gap-3 py-8">
               <Loader2 className="animate-spin text-primary" />
               <span className="text-muted-foreground">
