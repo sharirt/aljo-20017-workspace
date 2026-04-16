@@ -123,7 +123,7 @@ export const OnboardingStepSigning = ({
     (activeTemplates.length > 0 &&
       activeTemplates.every((t) => {
         const req = requests.find((r) => r.contractTemplateId === t.id);
-        return req && (req.status === "signed" || req.status === "approved");
+        return req && req.status === "approved";
       }));
 
   const getRequestForTemplate = (templateId: string) =>
@@ -294,6 +294,25 @@ export const OnboardingStepSigning = ({
               Waiting for you to sign all contracts above
             </p>
           )}
+
+          {/* Info callout when contracts are signed but awaiting admin approval */}
+          {!noContracts &&
+            !allSignedOrApproved &&
+            activeTemplates.some((t) => {
+              const req = requests.find((r) => r.contractTemplateId === t.id);
+              return req?.status === "signed";
+            }) &&
+            !activeTemplates.some((t) => {
+              const req = requests.find((r) => r.contractTemplateId === t.id);
+              return req?.status === "rejected";
+            }) && (
+              <div className="flex items-start gap-3 rounded-lg bg-muted p-4">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  Your contract has been signed. Please wait for admin approval before continuing to the next step.
+                </p>
+              </div>
+            )}
 
           {/* Action buttons */}
           <div className="flex justify-between pt-2">

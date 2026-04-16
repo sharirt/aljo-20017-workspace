@@ -116,7 +116,7 @@ export function getFirstIncompleteStep(
     const requests = signatureRequests || [];
     const allSignedOrApproved = activeTemplateIds.every((templateId) => {
       const req = requests.find((r) => r.contractTemplateId === templateId);
-      return req && (req.status === "signed" || req.status === "approved");
+      return req && req.status === "approved";
     });
     if (!allSignedOrApproved) return 2;
   }
