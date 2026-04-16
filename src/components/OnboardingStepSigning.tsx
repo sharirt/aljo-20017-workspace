@@ -51,15 +51,18 @@ export const OnboardingStepSigning = ({
   const [sendingIds, setSendingIds] = useState<Set<string>>(new Set());
   const [polling, setPolling] = useState(false);
 
-  const { data: allTemplates } = useEntityGetAll(ContractTemplatesEntity);
+  const { data: allTemplates, isLoading: isLoadingTemplates } = useEntityGetAll(ContractTemplatesEntity);
   const {
     data: signatureRequests,
     refetch: refetchRequests,
+    isLoading: isLoadingRequests,
   } = useEntityGetAll(
     SignatureRequestsEntity,
     { staffProfileId },
     { enabled: !!staffProfileId }
   );
+
+  const isDataReady = !isLoadingTemplates && !isLoadingRequests;
 
   const { executeFunction: sendSignature } = useExecuteAction(
     SendContractToStaffAction
@@ -79,15 +82,16 @@ export const OnboardingStepSigning = ({
     return () => clearInterval(interval);
   }, [refetchRequests]);
 
-  const noContracts = activeTemplates.length === 0;
+  const noContracts = isDataReady && activeTemplates.length === 0;
 
   const allSignedOrApproved =
-    noContracts ||
-    (activeTemplates.length > 0 &&
-      activeTemplates.every((t) => {
-        const req = requests.find((r) => r.contractTemplateId === t.id);
-        return req && (req.status === "signed" || req.status === "approved");
-      }));
+    isDataReady &&
+    (noContracts ||
+      (activeTemplates.length > 0 &&
+        activeTemplates.every((t) => {
+          const req = requests.find((r) => r.contractTemplateId === t.id);
+          return req && req.status === "approved";
+        })));
 
   const getRequestForTemplate = (templateId: string) =>
     requests.find((r) => r.contractTemplateId === templateId);
