@@ -38,7 +38,7 @@ export const OnboardingWizard = ({ staffProfile }: OnboardingWizardProps) => {
   const latestProfile = latestProfiles?.[0] || staffProfile;
 
   // Fetch contract templates and signature requests
-  const { data: allTemplates } = useEntityGetAll(ContractTemplatesEntity);
+  const { data: allTemplates, isLoading: loadingTemplates } = useEntityGetAll(ContractTemplatesEntity);
   const { data: signatureRequests } = useEntityGetAll(
     SignatureRequestsEntity,
     { staffProfileId: staffProfile.id },
@@ -73,12 +73,12 @@ export const OnboardingWizard = ({ staffProfile }: OnboardingWizardProps) => {
 
   const [currentStep, setCurrentStep] = useState<number | null>(null);
 
-  // Set initial step once data loads
+  // Set initial step once data loads (templates must resolve so activeTemplateIds is not transiently empty)
   useEffect(() => {
-    if (!loadingDocs && !loadingLatest && currentStep === null) {
+    if (!loadingDocs && !loadingLatest && !loadingTemplates && currentStep === null) {
       setCurrentStep(calculatedStartStep);
     }
-  }, [loadingDocs, loadingLatest, calculatedStartStep, currentStep]);
+  }, [loadingDocs, loadingLatest, loadingTemplates, calculatedStartStep, currentStep]);
 
   const handleNext = useCallback(() => {
     setCurrentStep((prev) => Math.min((prev ?? 0) + 1, 4));
@@ -105,7 +105,7 @@ export const OnboardingWizard = ({ staffProfile }: OnboardingWizardProps) => {
   const staffFullName = `${profileWithId?.firstName || ""} ${profileWithId?.lastName || ""}`.trim();
 
   // Loading state
-  if (loadingDocs || loadingLatest || currentStep === null) {
+  if (loadingDocs || loadingLatest || loadingTemplates || currentStep === null) {
     return (
       <div className="max-w-2xl mx-auto flex flex-col gap-6">
         <Skeleton className="h-16 w-full rounded-lg" />
