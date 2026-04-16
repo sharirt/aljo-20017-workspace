@@ -3,9 +3,10 @@ import {
   useEntityGetAll,
   useEntityUpdate,
   useEntityDelete,
+  useExecuteAction,
   useUser,
 } from "@blocksdiy/blocks-client-sdk/reactSdk";
-import { ContractTemplatesEntity } from "@/product-types";
+import { ContractTemplatesEntity, PublishContractToDocuSealAction } from "@/product-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { FileSignature, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Loader2 } from "lucide-react";
+import { FileSignature, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Loader2, CloudUpload, CheckCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { UploadTemplateDialog } from "@/components/UploadTemplateDialog";
@@ -33,10 +34,24 @@ export default function AdminContractTemplatesPage() {
   const [toggleConfirm, setToggleConfirm] = useState<any>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
 
   const { data: templates, isLoading } = useEntityGetAll(ContractTemplatesEntity);
   const { updateFunction } = useEntityUpdate(ContractTemplatesEntity);
   const { deleteFunction } = useEntityDelete(ContractTemplatesEntity);
+  const { executeFunction: publishToDocuSeal } = useExecuteAction(PublishContractToDocuSealAction);
+
+  const handlePublish = async (template: any) => {
+    setPublishingId(template.id);
+    try {
+      await publishToDocuSeal({ contractTemplateId: template.id });
+      toast.success("Template published to DocuSeal successfully");
+    } catch {
+      toast.error("Failed to publish template to DocuSeal");
+    } finally {
+      setPublishingId(null);
+    }
+  };
 
   const handleToggleActive = async () => {
     if (!toggleConfirm) return;
@@ -140,8 +155,14 @@ export default function AdminContractTemplatesPage() {
               <Card key={template.id}>
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-base leading-tight">
+                    <CardTitle className="text-base leading-tight flex items-center gap-2">
                       {template.name || "Untitled"}
+                      {template.docusealTemplateId && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-accent">
+                          <CheckCircle className="size-3" />
+                          Published
+                        </span>
+                      )}
                     </CardTitle>
                     <Badge
                       className={
@@ -193,6 +214,20 @@ export default function AdminContractTemplatesPage() {
                         <ToggleLeft data-icon="inline-start" />
                       )}
                       {template.isActive ? "Deactivate" : "Activate"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9"
+                      disabled={publishingId === template.id}
+                      onClick={() => handlePublish(template)}
+                    >
+                      {publishingId === template.id ? (
+                        <Loader2 data-icon="inline-start" className="animate-spin" />
+                      ) : (
+                        <CloudUpload data-icon="inline-start" />
+                      )}
+                      {template.docusealTemplateId ? "Re-publish" : "Publish to DocuSeal"}
                     </Button>
                     <Button
                       size="sm"

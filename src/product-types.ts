@@ -2562,6 +2562,77 @@ export const ProcessShiftTradeAction = {
 } as const;
 
 /**
+ * PublishContractToDocuSeal input payload
+ */
+export interface IPublishContractToDocuSealActionInput {
+  /** The ContractTemplates record ID to publish to DocuSeal  */
+  contractTemplateId: string;
+}
+
+/**
+ * The item updated in the table, keys are the column names, values are the column values
+ */
+export interface IPublishContractToDocuSealActionOutputPublishContractToDocuSealActionOutputItemsItemObject {
+  /** The id of the item to update. Must be an existing id in the table.  */
+  id?: string;
+  /** Item created at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  createdAt?: string;
+  /** Item updated at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  updatedAt?: string;
+  /** Item created by user id  */
+  createdBy?: string;
+  /** Item updated by user id  */
+  updatedBy?: string;
+  /** Item updated by agent id  */
+  updatedByAgentId?: string;
+  /** Item tenant id  */
+  tenantId?: string;
+  /** DocuSeal template ID returned by the Upload PDF Template action. Used when submitting signing requests via Submit Prefilled Templates.  */
+  docusealTemplateId?: number;
+  /** Human-readable name for the contract template (e.g. 'Staff Employment Agreement 2026')  */
+  name?: string;
+  /** Internal URL of the uploaded PDF file stored in the platform file system  */
+  fileUrl?: string;
+  /** Admin notes or description of what this contract covers  */
+  description?: string;
+  /** Email of the admin who uploaded this template  */
+  uploadedByEmail?: string;
+  /** Whether this template is currently active and will be sent to new staff during onboarding. Only active templates are included in signature request batches.  */
+  isActive?: boolean;
+  /** The DocuSeal signing role name used in this template (e.g. 'Staff', 'First Party'). Must match the role defined in the template fields.  */
+  roleName?: string;
+  /** JSON array of field placement objects configured by admin via the in-app PDF viewer. Each object contains: id, x, y, w, h (normalized 0-1 coordinates), page (1-based), type (signature/date/text/initials), role, condition.  */
+  fields?: IPublishContractToDocuSealActionOutputFieldsObject;
+}
+
+/**
+ * JSON array of field placement objects configured by admin via the in-app PDF viewer. Each object contains: id, x, y, w, h (normalized 0-1 coordinates), page (1-based), type (signature/date/text/initials), role, condition.
+ */
+export interface IPublishContractToDocuSealActionOutputFieldsObject {
+  /** Array of field placement objects  */
+  items?: IPublishContractToDocuSealActionOutputPublishContractToDocuSealActionOutputItemsItemObject[];
+}
+
+/**
+ * PublishContractToDocuSeal output payload
+ */
+export interface IPublishContractToDocuSealActionOutput {
+  /** The items updated in the table  */
+  items: IPublishContractToDocuSealActionOutputPublishContractToDocuSealActionOutputItemsItemObject[];
+}
+
+/**
+ * PublishContractToDocuSealAction
+ * Admin-triggered action that takes an existing ContractTemplates record, uploads its PDF to DocuSeal with the saved field placements, and writes the returned docusealTemplateId back to the ContractTemplates record. Call this once after finishing template field editing so SendContractToStaff can reuse the stored ID without re-uploading.
+ */
+export const PublishContractToDocuSealAction = {
+  actionBlockId: "69e0c935acfc26133696f23e",
+
+  inputInstanceType: {} as IPublishContractToDocuSealActionInput,
+  outputInstanceType: {} as IPublishContractToDocuSealActionOutput,
+} as const;
+
+/**
  * rejectRoleUpgrade input payload
  */
 export interface IRejectRoleUpgradeActionInput {
@@ -2926,7 +2997,7 @@ export interface ISendContractToStaffActionOutput {
 
 /**
  * SendContractToStaffAction
- * Sends a DocuSeal signing request to a staff member for a specific contract template. Steps: 1) Fetch contract template record from DB, 2) Get PDF as base64, 3) Upload PDF to DocuSeal as a template with field placements, 4) Create a signing submission, 5) Insert a SignatureRequests record, 6) Send email + SMS to staff with the signing link.
+ * Sends a DocuSeal signing request to a staff member for a specific contract template. Steps: 1) Fetch contract template record (which already has docusealTemplateId stored), 2) Create a signing submission using the stored template ID, 3) Insert a SignatureRequests record, 4) Send email + SMS to staff with the signing link. The PDF upload to DocuSeal is done separately via PublishContractToDocuSeal action.
  */
 export const SendContractToStaffAction = {
   actionBlockId: "69dff27e781c3c119fe9cd75",
