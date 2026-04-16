@@ -37,7 +37,7 @@ import {
   Building2,
 } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
-import { format, parseISO, isToday, subDays, isAfter } from "date-fns";
+import { format, parseISO, isToday } from "date-fns";
 import { StatsCard } from "@/components/StatsCard";
 import { RoleUpgradeAlert } from "@/components/RoleUpgradeAlert";
 import { PayPeriodBanner } from "@/components/PayPeriodBanner";
@@ -90,28 +90,15 @@ export default function AdminDashboardPage() {
     return { pendingOnboarding, nonCompliant };
   }, [staffProfiles]);
 
-  // Recent registrations (last 14 days)
+  // Recent registrations (last 5 staff by id descending)
   const recentRegistrations = useMemo(() => {
     if (!staffProfiles) return [];
-    
-    const fourteenDaysAgo = subDays(new Date(), 14);
-    
-    return staffProfiles
-      .filter(staff => {
-        if (!staff.createdAt) return false;
-        try {
-          return isAfter(parseISO(staff.createdAt), fourteenDaysAgo);
-        } catch {
-          return false;
-        }
-      })
+
+    return [...staffProfiles]
       .sort((a, b) => {
-        if (!a.createdAt || !b.createdAt) return 0;
-        try {
-          return parseISO(b.createdAt).getTime() - parseISO(a.createdAt).getTime();
-        } catch {
-          return 0;
-        }
+        const aId = (a as any).id || "";
+        const bId = (b as any).id || "";
+        return bId.localeCompare(aId);
       })
       .slice(0, 5);
   }, [staffProfiles]);
@@ -373,7 +360,7 @@ export default function AdminDashboardPage() {
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <UserCheck className="h-10 w-10 text-muted-foreground mb-2 opacity-50" />
                 <p className="text-sm font-medium">No recent registrations</p>
-                <p className="text-xs text-muted-foreground">No staff registered in the last 14 days</p>
+                <p className="text-xs text-muted-foreground">No staff members found</p>
               </div>
             ) : (
               <div className="space-y-0">
@@ -400,9 +387,6 @@ export default function AdminDashboardPage() {
                         {getOnboardingBadge(staff.onboardingStatus)}
                         {getComplianceBadge(staff.complianceStatus)}
                       </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground ml-auto shrink-0">
-                      {staff.createdAt && format(parseISO(staff.createdAt), "MMM d, yyyy")}
                     </div>
                   </Link>
                 ))}

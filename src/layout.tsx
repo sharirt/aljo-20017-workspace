@@ -199,7 +199,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         { title: "Staff Management", url: getPageUrl(AdminStaffManagementPage), icon: Users, badge: "" },
         { title: "Facility Management", url: getPageUrl(AdminFacilityManagementPage), icon: Building2, badge: "" },
         { title: "Shift Management", url: getPageUrl(AdminShiftManagementPage), icon: CalendarCheck, badge: "" },
-        { title: "Applications", url: getPageUrl(AdminApplicationsPage), icon: ClipboardCheck, badge: "" },
+        { title: "Job Application", url: getPageUrl(AdminApplicationsPage), icon: ClipboardCheck, badge: "" },
         { title: "Payroll", url: getPageUrl(AdminPayrollPage), icon: DollarSign, badge: "" },
         { title: "Invoices", url: getPageUrl(AdminInvoicesPage), icon: Receipt, badge: "" },
         { title: "Reports", url: getPageUrl(AdminReportsPage), icon: BarChart2, badge: "" },
