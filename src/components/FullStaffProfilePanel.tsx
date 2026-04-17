@@ -78,6 +78,7 @@ import {
   AlertTriangle,
   X,
   Gift,
+  FileSignature,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
@@ -1195,6 +1196,25 @@ export const FullStaffProfilePanel = ({
                 )}
               </div>
             )}
+
+            {/* Contract Signatures Sub-section */}
+            <Separator className="mt-4" />
+            <div className="pt-4">
+              <div className="flex items-center gap-2 mb-3">
+                <FileSignature className="h-4 w-4" />
+                <span className="text-sm font-medium">Contract Signatures</span>
+                {((signatureRequestsData as any[]) || []).length > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    {((signatureRequestsData as any[]) || []).length}
+                  </Badge>
+                )}
+              </div>
+              <ContractSignaturesSection
+                staffProfileId={staffId}
+                staffEmail={staff.email || ""}
+                staffName={staffName}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -1577,12 +1597,6 @@ export const FullStaffProfilePanel = ({
         {/* 12. Bonus History */}
         <BonusHistoryCard key={bonusKey} staffProfileId={staffId} />
 
-        {/* 13. Contract Signatures */}
-        <ContractSignaturesSection
-          staffProfileId={staffId}
-          staffEmail={staff.email || ""}
-          staffName={staffName}
-        />
       </div>
 
       {/* Give Bonus Dialog */}

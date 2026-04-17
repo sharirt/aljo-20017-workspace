@@ -12,7 +12,6 @@ import {
   SendContractToStaffAction,
   ContractTemplatesEntity,
 } from "@/product-types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -217,33 +216,18 @@ export const ContractSignaturesSection = ({
 
   return (
     <>
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <FileSignature className="h-5 w-5" />
-              Contract Signatures
-            </CardTitle>
-            {requests.length > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                {requests.length}
-              </Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex flex-col gap-3">
-              <Skeleton className="h-16 w-full rounded-lg" />
-              <Skeleton className="h-16 w-full rounded-lg" />
-            </div>
-          ) : requests.length === 0 ? (
-            <div className="rounded-lg border border-dashed p-6 text-center">
-              <p className="text-sm text-muted-foreground">No contracts sent yet</p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {requests.map((req: any) => (
+      {isLoading ? (
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-16 w-full rounded-lg" />
+          <Skeleton className="h-16 w-full rounded-lg" />
+        </div>
+      ) : requests.length === 0 ? (
+        <div className="rounded-lg border border-dashed p-6 text-center">
+          <p className="text-sm text-muted-foreground">No contracts sent yet</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {requests.map((req: any) => (
                 <div
                   key={req.id}
                   className={cn(
@@ -456,10 +440,8 @@ export const ContractSignaturesSection = ({
                   )}
                 </div>
               ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        </div>
+      )}
 
       {/* Document Preview Dialog */}
       <Dialog
