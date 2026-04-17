@@ -117,19 +117,6 @@ export const OnboardingStepSigning = ({
     return () => clearInterval(interval);
   }, [refetchRequests]);
 
-  const isDataReady = !isLoadingTemplates && !isLoadingRequests && !sending;
-
-  const noContracts = isDataReady && activeTemplates.length === 0;
-
-  const allSignedOrApproved =
-    isDataReady &&
-    (noContracts ||
-      (activeTemplates.length > 0 &&
-        activeTemplates.every((t) => {
-          const req = getBestRequestForTemplate(t.id);
-          return req && req.status === "approved";
-        })));
-
   const getBestRequestForTemplate = (templateId: string): RequestWithId | undefined => {
     const matching = requests.filter((r) => r.contractTemplateId === templateId);
     if (matching.length <= 1) return matching[0];
@@ -143,6 +130,19 @@ export const OnboardingStepSigning = ({
     const nonRejected = sorted.find((r) => r.status !== "rejected");
     return nonRejected || sorted[0];
   };
+
+  const isDataReady = !isLoadingTemplates && !isLoadingRequests && !sending;
+
+  const noContracts = isDataReady && activeTemplates.length === 0;
+
+  const allSignedOrApproved =
+    isDataReady &&
+    (noContracts ||
+      (activeTemplates.length > 0 &&
+        activeTemplates.every((t) => {
+          const req = getBestRequestForTemplate(t.id);
+          return req && req.status === "approved";
+        })));
 
   const getStatusBadge = (status?: string) => {
     switch (status) {

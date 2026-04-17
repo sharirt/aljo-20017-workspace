@@ -1606,7 +1606,195 @@ export interface IApproveWithdrawalActionInput {
   currentFilledCount?: number;
 }
 
-export type ApproveWithdrawalActionOutput = any;
+/**
+ * The item updated in the table, keys are the column names, values are the column values
+ */
+export interface IApproveWithdrawalActionOutputApproveWithdrawalActionOutputItemsItemObject {
+  /** The id of the item to update. Must be an existing id in the table.  */
+  id?: string;
+  /** Item created at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  createdAt?: string;
+  /** Item updated at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  updatedAt?: string;
+  /** Item created by user id  */
+  createdBy?: string;
+  /** Item updated by user id  */
+  updatedBy?: string;
+  /** Item updated by agent id  */
+  updatedByAgentId?: string;
+  /** Item tenant id  */
+  tenantId?: string;
+  /** Tracks how many approved withdrawals this staff member has had. Incremented each time a withdrawal request is approved. Used to flag frequent withdrawers (>= 3) for admin review.  */
+  withdrawalCount?: number;
+  /** JSON array of previous employer records filled during onboarding or profile editing. Each entry contains company name, role title, start/end dates, and a description of responsibilities.  */
+  previousEmployers?: IApproveWithdrawalActionOutputPreviousEmployersObject;
+  /** Phone number of emergency contact person  */
+  emergencyContactPhone?: string;
+  /** Total years of healthcare experience declared by the staff member during onboarding or profile editing. Used for quick reference alongside the detailed previousEmployers list.  */
+  totalHealthcareYears?: number;
+  /** Short 'about me' description written by the staff member  */
+  bio?: string;
+  /** URL to the staff member's avatar/profile photo image  */
+  profilePhotoUrl?: string;
+  /** JSON array of languages spoken by the staff member, e.g. ["English", "French"]  */
+  languages?: string[];
+  /** Province of residence for the staff member  */
+  province?: string;
+  /** Highest level of education completed by the staff member. Used in profile display and career advancement context.  */
+  highestEducation?: ApproveWithdrawalActionOutputHighestEducationEnum;
+  /** City of residence for the staff member  */
+  city?: string;
+  /** Preferred payment method for payroll. Options: direct_deposit, cheque, e_transfer. Defaults to direct_deposit.  */
+  paymentMethod?: ApproveWithdrawalActionOutputPaymentMethodEnum;
+  /** Date of birth for age verification and compliance requirements. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
+  dateOfBirth?: string;
+  /** Staff member's first name  */
+  firstName?: string;
+  /** Healthcare role type - structured classification of staff member's professional role  */
+  roleType?: ApproveWithdrawalActionOutputRoleTypeEnum;
+  /** Name of the educational institution where the highest degree was obtained (e.g. Dalhousie University, NSCC).  */
+  institution?: string;
+  /** Number of years of professional healthcare experience  */
+  yearsOfExperience?: number;
+  /** Staff member's street address for contact and payroll purposes  */
+  streetAddress?: string;
+  /** Work authorization status of the staff member  */
+  workPermitStatus?: ApproveWithdrawalActionOutputWorkPermitStatusEnum;
+  /** Onboarding progress tracking - staff must be approved before they can claim shifts  */
+  onboardingStatus?: ApproveWithdrawalActionOutputOnboardingStatusEnum;
+  /** JSON array of professional references with name, phone, and relationship  */
+  professionalReferences?: IApproveWithdrawalActionOutputApproveWithdrawalActionOutputProfessionalReferencesItemObject[];
+  /** JSON array of professional certifications held by the staff member, each with a name and optional expiry date.  */
+  certifications?: IApproveWithdrawalActionOutputCertificationsObject;
+  /** Whether the staff member has explicitly saved their weekly availability preferences. False by default until they save their first availability schedule. Used by admin to see which staff have configured their availability.  */
+  isAvailabilitySet?: boolean;
+  /** Year the staff member graduated from their highest education program (e.g. 2018).  */
+  graduationYear?: number;
+  /** Bank transit/routing number for direct deposit setup. Stored securely and displayed masked in the UI.  */
+  bankTransitNumber?: string;
+  /** Timestamp of when the staff member last opened the Notifications panel. Used to calculate the unread notification count badge. Null means never viewed (all notifications are unread).. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  lastViewedNotificationsDate?: string;
+  /** Contact phone number  */
+  phone?: string;
+  /** Calculated average of all ratings received from facility managers. Updated automatically each time a new rating is submitted. Displayed as stars (e.g. 4.7) on staff profile and admin views.  */
+  averageRating?: number;
+  /** Last 4 digits of the staff member's bank account number for verification purposes. Stored masked for security.  */
+  bankAccountLast4?: string;
+  /** Postal code of the staff member's address  */
+  postalCode?: string;
+  /** Name of the staff member's bank for direct deposit (e.g., TD Canada Trust, RBC). Only relevant when paymentMethod = direct_deposit.  */
+  bankName?: string;
+  /** Staff member's shirt size for uniform ordering  */
+  shirtSize?: ApproveWithdrawalActionOutputShirtSizeEnum;
+  /** Social Insurance Number (SIN) for payroll and tax purposes — stored securely  */
+  sinNumber?: string;
+  /** Current compliance status based on document expiry and requirements - determines if staff can work shifts  */
+  complianceStatus?: ApproveWithdrawalActionOutputComplianceStatusEnum;
+  /** Timestamp of when the staff member last opened the Messages inbox. Used to calculate the unread message count badge in the navigation.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  lastViewedMessagesDate?: string;
+  /** List of facility IDs  */
+  orientedFacilityIds?: string[];
+  /** Total count of ratings received by this staff member. Used alongside averageRating to show credibility (e.g. '4.7 stars from 23 ratings').  */
+  totalRatings?: number;
+  /** JSON array of preferred availability slots, e.g. [{"day":"Mon","shift":"day"}]  */
+  preferredAvailability?: IApproveWithdrawalActionOutputApproveWithdrawalActionOutputPreferredAvailabilityItemObject[];
+  /** JSON array of special clinical skills, e.g. ["Wound Care", "Dementia Care", "IV Certified"]  */
+  specialSkills?: string[];
+  /** Staff member's last name  */
+  lastName?: string;
+  /** Email address linking to Users entity  */
+  email?: string;
+  /** Full name of emergency contact person  */
+  emergencyContactName?: string;
+}
+
+/**
+ * JSON array of previous employer records filled during onboarding or profile editing. Each entry contains company name, role title, start/end dates, and a description of responsibilities.
+ */
+export interface IApproveWithdrawalActionOutputPreviousEmployersObject {
+  items?: IApproveWithdrawalActionOutputApproveWithdrawalActionOutputItemsItemObject[];
+}
+
+export type ApproveWithdrawalActionOutputHighestEducationEnum =
+  | "high_school"
+  | "college"
+  | "diploma"
+  | "bachelors"
+  | "masters"
+  | "doctorate";
+
+export type ApproveWithdrawalActionOutputPaymentMethodEnum =
+  | "direct_deposit"
+  | "cheque"
+  | "e_transfer";
+
+export type ApproveWithdrawalActionOutputRoleTypeEnum =
+  | "RN"
+  | "LPN"
+  | "CCA"
+  | "CITR";
+
+export type ApproveWithdrawalActionOutputWorkPermitStatusEnum =
+  | "citizen"
+  | "permanent_resident"
+  | "work_permit";
+
+export type ApproveWithdrawalActionOutputOnboardingStatusEnum =
+  | "incomplete"
+  | "pending_review"
+  | "approved"
+  | "rejected";
+
+/**
+ * undefined
+ */
+export interface IApproveWithdrawalActionOutputApproveWithdrawalActionOutputProfessionalReferencesItemObject {
+  /** Reference's full name  */
+  name?: string;
+  /** Reference's phone number  */
+  phone?: string;
+  /** Professional relationship to the staff member  */
+  relationship?: string;
+}
+
+/**
+ * JSON array of professional certifications held by the staff member, each with a name and optional expiry date.
+ */
+export interface IApproveWithdrawalActionOutputCertificationsObject {
+  items?: IApproveWithdrawalActionOutputApproveWithdrawalActionOutputItemsItemObject[];
+}
+
+export type ApproveWithdrawalActionOutputShirtSizeEnum =
+  | "XS"
+  | "S"
+  | "M"
+  | "L"
+  | "XL"
+  | "XXL";
+
+export type ApproveWithdrawalActionOutputComplianceStatusEnum =
+  | "compliant"
+  | "pending"
+  | "expired"
+  | "blocked";
+
+/**
+ * undefined
+ */
+export interface IApproveWithdrawalActionOutputApproveWithdrawalActionOutputPreferredAvailabilityItemObject {
+  /** Day of the week, e.g. Mon, Tue  */
+  day?: string;
+  /** Shift preference: day, evening, or night  */
+  shift?: string;
+}
+
+/**
+ * ApproveWithdrawal output payload
+ */
+export interface IApproveWithdrawalActionOutput {
+  /** The items updated in the table  */
+  items: IApproveWithdrawalActionOutputApproveWithdrawalActionOutputItemsItemObject[];
+}
 
 /**
  * ApproveWithdrawalAction
@@ -2487,7 +2675,67 @@ export interface IRejectSignatureRequestActionActionInput {
   rejectionReason: string;
 }
 
-export type RejectSignatureRequestActionActionOutput = any;
+export type RejectSignatureRequestActionActionOutputStatusEnum =
+  | "pending"
+  | "signed"
+  | "approved"
+  | "rejected";
+
+/**
+ * The item updated in the table, keys are the column names, values are the column values
+ */
+export interface IRejectSignatureRequestActionActionOutputRejectSignatureRequestActionActionOutputItemsItemObject {
+  /** The id of the item to update. Must be an existing id in the table.  */
+  id?: string;
+  /** Item created at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  createdAt?: string;
+  /** Item updated at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  updatedAt?: string;
+  /** Item created by user id  */
+  createdBy?: string;
+  /** Item updated by user id  */
+  updatedBy?: string;
+  /** Item updated by agent id  */
+  updatedByAgentId?: string;
+  /** Item tenant id  */
+  tenantId?: string;
+  /** URL of the completed signed document PDF. Populated by the HandleSignatureCompleted action when the E-Signature Event webhook fires.  */
+  signedDocumentUrl?: string;
+  /** Current status of the signature request. pending=sent but not yet signed, signed=staff completed signing, approved=admin approved the signed doc, rejected=admin rejected and re-send may be needed.  */
+  status?: RejectSignatureRequestActionActionOutputStatusEnum;
+  /** Full name of the staff member at the time the request was sent. Denormalized for display.  */
+  staffName?: string;
+  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
+  staffEmail?: string;
+  /** Timestamp when the staff member completed signing. Populated by the HandleSignatureCompleted action.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  signedAt?: string;
+  /** Foreign key reference to StaffProfiles.id — the staff member who needs to sign  */
+  staffProfileId?: string;
+  /** Name of the contract template at the time of sending. Denormalized for display even if template is later renamed.  */
+  contractTemplateName?: string;
+  /** Email of the admin who approved or rejected this signed document.  */
+  reviewedByEmail?: string;
+  /** DocuSeal submission ID returned by Submit Prefilled Templates. Used to match incoming E-Signature Event webhook callbacks.  */
+  submissionId?: number;
+  /** The signing URL sent to the staff member. Can be shared directly if email/SMS delivery fails.  */
+  signingUrl?: string;
+  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
+  docusealTemplateId?: number;
+  /** Admin-provided reason for rejecting the signed document. Only populated when status=rejected.  */
+  rejectionReason?: string;
+  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
+  contractTemplateId?: string;
+  /** Timestamp when the signing request was sent to the staff member.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  sentAt?: string;
+}
+
+/**
+ * RejectSignatureRequestAction output payload
+ */
+export interface IRejectSignatureRequestActionActionOutput {
+  /** The items updated in the table  */
+  items: IRejectSignatureRequestActionActionOutputRejectSignatureRequestActionActionOutputItemsItemObject[];
+}
 
 /**
  * RejectSignatureRequestActionAction
@@ -2685,7 +2933,67 @@ export interface ISendContractToStaffActionInput {
   contractTemplateId: string;
 }
 
-export type SendContractToStaffActionOutput = any;
+export type SendContractToStaffActionOutputStatusEnum =
+  | "pending"
+  | "signed"
+  | "approved"
+  | "rejected";
+
+/**
+ * The item inserted into the table, keys are the column names, values are the column values
+ */
+export interface ISendContractToStaffActionOutputSendContractToStaffActionOutputItemsItemObject {
+  /** Item id  */
+  id?: string;
+  /** Item created at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  createdAt?: string;
+  /** Item updated at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  updatedAt?: string;
+  /** Item created by user id  */
+  createdBy?: string;
+  /** Item updated by user id  */
+  updatedBy?: string;
+  /** Item updated by agent id  */
+  updatedByAgentId?: string;
+  /** Item tenant id  */
+  tenantId?: string;
+  /** URL of the completed signed document PDF. Populated by the HandleSignatureCompleted action when the E-Signature Event webhook fires.  */
+  signedDocumentUrl?: string;
+  /** Current status of the signature request. pending=sent but not yet signed, signed=staff completed signing, approved=admin approved the signed doc, rejected=admin rejected and re-send may be needed.  */
+  status?: SendContractToStaffActionOutputStatusEnum;
+  /** Full name of the staff member at the time the request was sent. Denormalized for display.  */
+  staffName?: string;
+  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
+  staffEmail?: string;
+  /** Timestamp when the staff member completed signing. Populated by the HandleSignatureCompleted action.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  signedAt?: string;
+  /** Foreign key reference to StaffProfiles.id — the staff member who needs to sign  */
+  staffProfileId?: string;
+  /** Name of the contract template at the time of sending. Denormalized for display even if template is later renamed.  */
+  contractTemplateName?: string;
+  /** Email of the admin who approved or rejected this signed document.  */
+  reviewedByEmail?: string;
+  /** DocuSeal submission ID returned by Submit Prefilled Templates. Used to match incoming E-Signature Event webhook callbacks.  */
+  submissionId?: number;
+  /** The signing URL sent to the staff member. Can be shared directly if email/SMS delivery fails.  */
+  signingUrl?: string;
+  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
+  docusealTemplateId?: number;
+  /** Admin-provided reason for rejecting the signed document. Only populated when status=rejected.  */
+  rejectionReason?: string;
+  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
+  contractTemplateId?: string;
+  /** Timestamp when the signing request was sent to the staff member.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  sentAt?: string;
+}
+
+/**
+ * SendContractToStaff output payload
+ */
+export interface ISendContractToStaffActionOutput {
+  /** The items inserted into the table  */
+  items: ISendContractToStaffActionOutputSendContractToStaffActionOutputItemsItemObject[];
+}
 
 /**
  * SendContractToStaffAction
@@ -2965,7 +3273,57 @@ export interface IUploadContractTemplateActionActionInput {
   uploadedByEmail: string;
 }
 
-export type UploadContractTemplateActionActionOutput = any;
+/**
+ * The item inserted into the table, keys are the column names, values are the column values
+ */
+export interface IUploadContractTemplateActionActionOutputUploadContractTemplateActionActionOutputItemsItemObject {
+  /** Item id  */
+  id?: string;
+  /** Item created at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  createdAt?: string;
+  /** Item updated at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  updatedAt?: string;
+  /** Item created by user id  */
+  createdBy?: string;
+  /** Item updated by user id  */
+  updatedBy?: string;
+  /** Item updated by agent id  */
+  updatedByAgentId?: string;
+  /** Item tenant id  */
+  tenantId?: string;
+  /** DocuSeal template ID returned by the Upload PDF Template action. Used when submitting signing requests via Submit Prefilled Templates.  */
+  docusealTemplateId?: number;
+  /** Human-readable name for the contract template (e.g. 'Staff Employment Agreement 2026')  */
+  name?: string;
+  /** Internal URL of the uploaded PDF file stored in the platform file system  */
+  fileUrl?: string;
+  /** Admin notes or description of what this contract covers  */
+  description?: string;
+  /** Email of the admin who uploaded this template  */
+  uploadedByEmail?: string;
+  /** Whether this template is currently active and will be sent to new staff during onboarding. Only active templates are included in signature request batches.  */
+  isActive?: boolean;
+  /** The DocuSeal signing role name used in this template (e.g. 'Staff', 'First Party'). Must match the role defined in the template fields.  */
+  roleName?: string;
+  /** JSON array of field placement objects configured by admin via the in-app PDF viewer. Each object contains: id, x, y, w, h (normalized 0-1 coordinates), page (1-based), type (signature/date/text/initials), role, condition.  */
+  fields?: IUploadContractTemplateActionActionOutputFieldsObject;
+}
+
+/**
+ * JSON array of field placement objects configured by admin via the in-app PDF viewer. Each object contains: id, x, y, w, h (normalized 0-1 coordinates), page (1-based), type (signature/date/text/initials), role, condition.
+ */
+export interface IUploadContractTemplateActionActionOutputFieldsObject {
+  /** Array of field placement objects  */
+  items?: IUploadContractTemplateActionActionOutputUploadContractTemplateActionActionOutputItemsItemObject[];
+}
+
+/**
+ * UploadContractTemplateAction output payload
+ */
+export interface IUploadContractTemplateActionActionOutput {
+  /** The items inserted into the table  */
+  items: IUploadContractTemplateActionActionOutputUploadContractTemplateActionActionOutputItemsItemObject[];
+}
 
 /**
  * UploadContractTemplateActionAction
