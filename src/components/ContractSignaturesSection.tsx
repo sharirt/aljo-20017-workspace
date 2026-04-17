@@ -158,6 +158,28 @@ export const ContractSignaturesSection = ({
     }
   };
 
+  const handleDownloadDocument = async (fileUrl?: string, fileName?: string, requestId?: string) => {
+    if (!fileUrl) return;
+    if (requestId) setViewLoadingId(requestId);
+    try {
+      const result = await getSignedUrl({ fileUrl });
+      if (result?.signedUrl) {
+        const a = document.createElement("a");
+        a.href = result.signedUrl;
+        a.download = fileName ? `${fileName}.pdf` : "document.pdf";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        toast.error("Failed to get document URL");
+      }
+    } catch {
+      toast.error("Failed to download document");
+    } finally {
+      setViewLoadingId(null);
+    }
+  };
+
   const handlePreviewDocument = async (fileUrl: string, contractName: string, requestId: string) => {
     setPreviewLoadingId(requestId);
     try {
@@ -275,19 +297,19 @@ export const ContractSignaturesSection = ({
 
                       {rejectingId !== req.id && (
                         <>
-                          {/* View Document - primary action */}
+                          {/* Download Document - primary action */}
                           <Button
                             variant="outline"
                             className="w-full min-h-10"
-                            onClick={() => handleViewDocument(req.signedDocumentUrl, req.id)}
+                            onClick={() => handleDownloadDocument(req.signedDocumentUrl, req.contractTemplateName, req.id)}
                             disabled={viewLoadingId === req.id}
                           >
                             {viewLoadingId === req.id ? (
                               <Loader2 className="animate-spin" data-icon="inline-start" />
                             ) : (
-                              <ExternalLink data-icon="inline-start" />
+                              <Download data-icon="inline-start" />
                             )}
-                            View Document
+                            Download Document
                           </Button>
 
                           {/* Approve / Reject side by side */}
