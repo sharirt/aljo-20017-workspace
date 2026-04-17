@@ -126,12 +126,23 @@ export const OnboardingStepSigning = ({
     (noContracts ||
       (activeTemplates.length > 0 &&
         activeTemplates.every((t) => {
-          const req = requests.find((r) => r.contractTemplateId === t.id);
+          const req = getBestRequestForTemplate(t.id);
           return req && req.status === "approved";
         })));
 
-  const getRequestForTemplate = (templateId: string) =>
-    requests.find((r) => r.contractTemplateId === templateId);
+  const getBestRequestForTemplate = (templateId: string): RequestWithId | undefined => {
+    const matching = requests.filter((r) => r.contractTemplateId === templateId);
+    if (matching.length <= 1) return matching[0];
+    // Sort by sentAt descending (newest first)
+    const sorted = [...matching].sort((a, b) => {
+      const dateA = a.sentAt ? new Date(a.sentAt).getTime() : 0;
+      const dateB = b.sentAt ? new Date(b.sentAt).getTime() : 0;
+      return dateB - dateA;
+    });
+    // Prefer the newest non-rejected request
+    const nonRejected = sorted.find((r) => r.status !== "rejected");
+    return nonRejected || sorted[0];
+  };
 
   const getStatusBadge = (status?: string) => {
     switch (status) {
@@ -200,7 +211,7 @@ export const OnboardingStepSigning = ({
             </div>
           ) : (
             activeTemplates.map((template) => {
-              const req = getRequestForTemplate(template.id);
+              const req = getBestRequestForTemplate(template.id);
               const status = req?.status;
 
               return (
@@ -310,11 +321,11 @@ export const OnboardingStepSigning = ({
           {!noContracts &&
             !allSignedOrApproved &&
             activeTemplates.some((t) => {
-              const req = requests.find((r) => r.contractTemplateId === t.id);
+              const req = getBestRequestForTemplate(t.id);
               return req?.status === "signed";
             }) &&
             !activeTemplates.some((t) => {
-              const req = requests.find((r) => r.contractTemplateId === t.id);
+              const req = getBestRequestForTemplate(t.id);
               return req?.status === "rejected";
             }) && (
               <div className="flex items-start gap-3 rounded-lg bg-muted p-4">
