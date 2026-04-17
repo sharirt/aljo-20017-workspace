@@ -16,6 +16,7 @@ import {
   Loader2,
   Info,
   ExternalLink,
+  RefreshCw,
 } from "lucide-react";
 import {
   Card,
@@ -49,6 +50,7 @@ export const OnboardingStepSigning = ({
   onBack,
 }: OnboardingStepSigningProps) => {
   const [sendingIds, setSendingIds] = useState<Set<string>>(new Set());
+  const [resendingIds, setResendingIds] = useState<Set<string>>(new Set());
   const [polling, setPolling] = useState(false);
 
   const { data: allTemplates, isLoading: isLoadingTemplates } = useEntityGetAll(ContractTemplatesEntity);
@@ -111,6 +113,29 @@ export const OnboardingStepSigning = ({
       toast.error("Failed to send contract. Please try again.");
     } finally {
       setSendingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(template.id);
+        return next;
+      });
+    }
+  };
+
+  const handleResendContract = async (template: TemplateWithId) => {
+    setResendingIds((prev) => new Set(prev).add(template.id));
+    try {
+      await sendSignature({
+        staffProfileId,
+        staffEmail,
+        staffName,
+        contractTemplateId: template.id,
+        ...(staffPhone ? { staffPhone } : {}),
+      });
+      await refetchRequests();
+      toast.success("New signing link sent!");
+    } catch {
+      toast.error("Failed to re-send contract. Please try again.");
+    } finally {
+      setResendingIds((prev) => {
         const next = new Set(prev);
         next.delete(template.id);
         return next;
@@ -250,22 +275,24 @@ export const OnboardingStepSigning = ({
                           <XCircle className="shrink-0" />
                           {req?.rejectionReason || "Document was rejected"}
                         </div>
-                        {req?.signingUrl && (
-                          <Button
-                            variant="outline"
-                            className="h-12"
-                            asChild
-                          >
-                            <a
-                              href={req.signingUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <ExternalLink data-icon="inline-start" />
-                              Re-sign
-                            </a>
-                          </Button>
-                        )}
+                        <Button
+                          variant="outline"
+                          className="h-12 w-full"
+                          disabled={resendingIds.has(template.id)}
+                          onClick={() => handleResendContract(template)}
+                        >
+                          {resendingIds.has(template.id) ? (
+                            <>
+                              <Loader2 data-icon="inline-start" className="animate-spin" />
+                              Resending...
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw data-icon="inline-start" />
+                              Re-send Contract
+                            </>
+                          )}
+                        </Button>
                       </div>
                     )}
                   </div>
