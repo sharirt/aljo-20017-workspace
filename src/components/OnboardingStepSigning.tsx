@@ -28,6 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { getCanonicalSignatureRequestForTemplate } from "@/utils/onboardingUtils";
 
 interface OnboardingStepSigningProps {
   staffProfileId: string;
@@ -92,20 +93,9 @@ export const OnboardingStepSigning = ({
     (noContracts ||
       (activeTemplates.length > 0 &&
         activeTemplates.every((t) => {
-          const req = requests.find((r) => r.contractTemplateId === t.id);
-          return req && req.status === "approved";
+          const req = getCanonicalSignatureRequestForTemplate(requests, t.id);
+          return req?.status === "approved";
         })));
-
-  const getRequestForTemplate = (templateId: string) => {
-    const matching = requests.filter((r) => r.contractTemplateId === templateId);
-    if (matching.length <= 1) return matching[0];
-    // Prefer non-rejected, then latest by sentAt
-    const nonRejected = matching.filter((r) => r.status !== "rejected");
-    if (nonRejected.length > 0) {
-      return nonRejected.sort((a, b) => (b.sentAt || "").localeCompare(a.sentAt || ""))[0];
-    }
-    return matching.sort((a, b) => (b.sentAt || "").localeCompare(a.sentAt || ""))[0];
-  };
 
   const handleSendContract = async (template: TemplateWithId) => {
     setSendingIds((prev) => new Set(prev).add(template.id));
@@ -204,7 +194,7 @@ export const OnboardingStepSigning = ({
             </div>
           ) : (
             activeTemplates.map((template) => {
-              const req = getRequestForTemplate(template.id);
+              const req = getCanonicalSignatureRequestForTemplate(requests, template.id);
               const isOptimisticPending = optimisticPendingIds.has(template.id);
               const status = isOptimisticPending && (req?.status === "rejected" || !req) ? "pending" : req?.status;
               const isSending = sendingIds.has(template.id);

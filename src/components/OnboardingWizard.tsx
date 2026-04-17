@@ -58,6 +58,7 @@ export const OnboardingWizard = ({ staffProfile }: OnboardingWizardProps) => {
       ((signatureRequests as any[]) || []).map((r: any) => ({
         contractTemplateId: r.contractTemplateId as string | undefined,
         status: r.status as string | undefined,
+        sentAt: r.sentAt as string | undefined,
       })),
     [signatureRequests]
   );

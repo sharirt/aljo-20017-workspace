@@ -86,11 +86,31 @@ export function getDocumentCompletion(
 }
 
 /**
- * Signature request info for determining signing step completion
+ * Minimal fields for resolving which signature request row applies to a template
+ * when multiple rows exist (must match OnboardingStepSigning selection rules).
  */
-interface SignatureRequestInfo {
+export interface SignatureRequestInfo {
   contractTemplateId?: string;
   status?: string;
+  sentAt?: string;
+}
+
+/**
+ * When multiple signature requests exist for one template, prefer non-rejected rows,
+ * then the latest by sentAt (same logic as the signing step UI).
+ */
+export function getCanonicalSignatureRequestForTemplate<T extends SignatureRequestInfo>(
+  requests: T[] | undefined,
+  templateId: string
+): T | undefined {
+  const list = requests || [];
+  const matching = list.filter((r) => r.contractTemplateId === templateId);
+  if (matching.length <= 1) return matching[0];
+  const nonRejected = matching.filter((r) => r.status !== "rejected");
+  if (nonRejected.length > 0) {
+    return nonRejected.sort((a, b) => (b.sentAt || "").localeCompare(a.sentAt || ""))[0];
+  }
+  return matching.sort((a, b) => (b.sentAt || "").localeCompare(a.sentAt || ""))[0];
 }
 
 /**
@@ -115,8 +135,8 @@ export function getFirstIncompleteStep(
   if (activeTemplateIds && activeTemplateIds.length > 0) {
     const requests = signatureRequests || [];
     const allSignedOrApproved = activeTemplateIds.every((templateId) => {
-      const req = requests.find((r) => r.contractTemplateId === templateId);
-      return req && req.status === "approved";
+      const req = getCanonicalSignatureRequestForTemplate(requests, templateId);
+      return req?.status === "approved";
     });
     if (!allSignedOrApproved) return 2;
   }
