@@ -52,6 +52,7 @@ export const OnboardingStepSigning = ({
   const [sendingIds, setSendingIds] = useState<Set<string>>(new Set());
   const [resendingIds, setResendingIds] = useState<Set<string>>(new Set());
   const [polling, setPolling] = useState(false);
+  const [optimisticPendingIds, setOptimisticPendingIds] = useState<Set<string>>(new Set());
 
   const { data: allTemplates, isLoading: isLoadingTemplates } = useEntityGetAll(ContractTemplatesEntity);
   const {
@@ -95,8 +96,16 @@ export const OnboardingStepSigning = ({
           return req && req.status === "approved";
         })));
 
-  const getRequestForTemplate = (templateId: string) =>
-    requests.find((r) => r.contractTemplateId === templateId);
+  const getRequestForTemplate = (templateId: string) => {
+    const matching = requests.filter((r) => r.contractTemplateId === templateId);
+    if (matching.length <= 1) return matching[0];
+    // Prefer non-rejected, then latest by sentAt
+    const nonRejected = matching.filter((r) => r.status !== "rejected");
+    if (nonRejected.length > 0) {
+      return nonRejected.sort((a, b) => (b.sentAt || "").localeCompare(a.sentAt || ""))[0];
+    }
+    return matching.sort((a, b) => (b.sentAt || "").localeCompare(a.sentAt || ""))[0];
+  };
 
   const handleSendContract = async (template: TemplateWithId) => {
     setSendingIds((prev) => new Set(prev).add(template.id));
@@ -130,6 +139,7 @@ export const OnboardingStepSigning = ({
         contractTemplateId: template.id,
         ...(staffPhone ? { staffPhone } : {}),
       });
+      setOptimisticPendingIds((prev) => new Set(prev).add(template.id));
       await refetchRequests();
       toast.success("New signing link sent!");
     } catch {
@@ -195,8 +205,10 @@ export const OnboardingStepSigning = ({
           ) : (
             activeTemplates.map((template) => {
               const req = getRequestForTemplate(template.id);
-              const status = req?.status;
+              const isOptimisticPending = optimisticPendingIds.has(template.id);
+              const status = isOptimisticPending && (req?.status === "rejected" || !req) ? "pending" : req?.status;
               const isSending = sendingIds.has(template.id);
+              const optimisticSigningUrl = isOptimisticPending && (req?.status === "rejected" || !req) ? undefined : req?.signingUrl;
 
               return (
                 <div
@@ -234,16 +246,15 @@ export const OnboardingStepSigning = ({
                     {status === "pending" && (
                       <div className="flex flex-col gap-2">
                         <p className="text-sm text-muted-foreground">
-                          Check your email for the signing link, or use the
-                          button below
+                          Check your email for the signing link{optimisticSigningUrl ? ", or use the button below" : ""}
                         </p>
-                        {req?.signingUrl && (
+                        {optimisticSigningUrl && (
                           <Button
                             className="h-12"
                             asChild
                           >
                             <a
-                              href={req.signingUrl}
+                              href={optimisticSigningUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                             >
