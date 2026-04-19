@@ -54,6 +54,14 @@ interface FieldPlacementEditorProps {
   roleName: string;
 }
 
+interface DragState {
+  fieldId: string;
+  startMouseX: number;
+  startMouseY: number;
+  startFieldX: number;
+  startFieldY: number;
+}
+
 export const FieldPlacementEditor = ({
   pdfUrl,
   fields,
@@ -68,6 +76,7 @@ export const FieldPlacementEditor = ({
     currentX: number;
     currentY: number;
   } | null>(null);
+  const [dragState, setDragState] = useState<DragState | null>(null);
   const [selectedType, setSelectedType] = useState<string>("signature");
   const [currentPage, setCurrentPage] = useState(1);
   const [numPages, setNumPages] = useState(0);
@@ -94,6 +103,7 @@ export const FieldPlacementEditor = ({
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (dragState) return;
     if (!overlayRef.current) return;
     const rect = overlayRef.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width;
@@ -101,35 +111,81 @@ export const FieldPlacementEditor = ({
     setDrawing({ startX: x, startY: y, currentX: x, currentY: y });
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!drawing || !overlayRef.current) return;
-    const rect = overlayRef.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
-    setDrawing({ ...drawing, currentX: x, currentY: y });
+  const handleWrapperMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (drawing && overlayRef.current) {
+      const rect = overlayRef.current.getBoundingClientRect();
+      const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+      setDrawing({ ...drawing, currentX: x, currentY: y });
+    }
+
+    if (dragState && overlayRef.current) {
+      const rect = overlayRef.current.getBoundingClientRect();
+      const mouseX = (e.clientX - rect.left) / rect.width;
+      const mouseY = (e.clientY - rect.top) / rect.height;
+      const deltaX = mouseX - dragState.startMouseX;
+      const deltaY = mouseY - dragState.startMouseY;
+
+      const field = fields.find((f) => f.id === dragState.fieldId);
+      if (!field) return;
+
+      let newX = dragState.startFieldX + deltaX;
+      let newY = dragState.startFieldY + deltaY;
+      newX = Math.max(0, Math.min(1 - field.w, newX));
+      newY = Math.max(0, Math.min(1 - field.h, newY));
+
+      onFieldsChange(
+        fields.map((f) =>
+          f.id === dragState.fieldId ? { ...f, x: newX, y: newY } : f
+        )
+      );
+    }
   };
 
-  const handleMouseUp = () => {
-    if (!drawing) return;
-    const x = Math.min(drawing.startX, drawing.currentX);
-    const y = Math.min(drawing.startY, drawing.currentY);
-    const w = Math.abs(drawing.currentX - drawing.startX);
-    const h = Math.abs(drawing.currentY - drawing.startY);
+  const handleWrapperMouseUp = () => {
+    if (drawing) {
+      const x = Math.min(drawing.startX, drawing.currentX);
+      const y = Math.min(drawing.startY, drawing.currentY);
+      const w = Math.abs(drawing.currentX - drawing.startX);
+      const h = Math.abs(drawing.currentY - drawing.startY);
 
-    if (w > 0.02 && h > 0.01) {
-      const newField: FieldPlacement = {
-        id: generateId(),
-        x,
-        y,
-        w,
-        h,
-        page: currentPage,
-        type: selectedType,
-        role: roleName,
-      };
-      onFieldsChange([...fields, newField]);
+      if (w > 0.02 && h > 0.01) {
+        const newField: FieldPlacement = {
+          id: generateId(),
+          x,
+          y,
+          w,
+          h,
+          page: currentPage,
+          type: selectedType,
+          role: roleName,
+        };
+        onFieldsChange([...fields, newField]);
+      }
+      setDrawing(null);
     }
-    setDrawing(null);
+
+    if (dragState) {
+      setDragState(null);
+    }
+  };
+
+  const handleFieldMouseDown = (
+    e: React.MouseEvent,
+    field: FieldPlacement
+  ) => {
+    e.stopPropagation();
+    if (!overlayRef.current) return;
+    const rect = overlayRef.current.getBoundingClientRect();
+    const mouseX = (e.clientX - rect.left) / rect.width;
+    const mouseY = (e.clientY - rect.top) / rect.height;
+    setDragState({
+      fieldId: field.id,
+      startMouseX: mouseX,
+      startMouseY: mouseY,
+      startFieldX: field.x,
+      startFieldY: field.y,
+    });
   };
 
   const handleDeleteField = (id: string) => {
@@ -174,7 +230,7 @@ export const FieldPlacementEditor = ({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 w-8 p-0"
+                className="size-8 p-0"
                 disabled={currentPage <= 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               >
@@ -186,7 +242,7 @@ export const FieldPlacementEditor = ({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 w-8 p-0"
+                className="size-8 p-0"
                 disabled={currentPage >= numPages}
                 onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
               >
@@ -208,54 +264,30 @@ export const FieldPlacementEditor = ({
             onLoadSuccess={onDocumentLoadSuccess}
             loading={null}
           >
-            <div className="relative">
+            <div
+              className="relative"
+              onMouseMove={handleWrapperMouseMove}
+              onMouseUp={handleWrapperMouseUp}
+              onMouseLeave={() => {
+                if (drawing) handleWrapperMouseUp();
+                if (dragState) setDragState(null);
+              }}
+            >
               <Page
                 pageNumber={currentPage}
                 width={containerWidth || undefined}
                 renderTextLayer={false}
                 renderAnnotationLayer={false}
               />
-              {/* Drawing overlay — sits exactly on top of the rendered page */}
+              {/* Drawing overlay */}
               <div
                 ref={overlayRef}
-                className="absolute inset-0 cursor-crosshair"
+                className={cn(
+                  "absolute inset-0",
+                  dragState ? "pointer-events-none" : "cursor-crosshair"
+                )}
                 onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={() => drawing && handleMouseUp()}
               >
-                {/* Placed fields for current page */}
-                {fields
-                  .filter((f) => f.page === currentPage)
-                  .map((field) => (
-                    <div
-                      key={field.id}
-                      className={cn(
-                        "absolute border-2 rounded-sm flex items-center justify-between px-1",
-                        FIELD_TYPE_COLORS[field.type] || "bg-primary/30 border-primary"
-                      )}
-                      style={{
-                        left: `${field.x * 100}%`,
-                        top: `${field.y * 100}%`,
-                        width: `${field.w * 100}%`,
-                        height: `${field.h * 100}%`,
-                      }}
-                    >
-                      <span className="text-[10px] font-medium truncate text-foreground">
-                        {field.type}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteField(field.id);
-                        }}
-                        className="shrink-0 rounded-full bg-destructive/80 p-0.5 text-destructive-foreground hover:bg-destructive"
-                      >
-                        <X className="size-3" />
-                      </button>
-                    </div>
-                  ))}
-
                 {/* Drawing preview box */}
                 {drawingBox && (
                   <div
@@ -266,6 +298,45 @@ export const FieldPlacementEditor = ({
                     style={drawingBox}
                   />
                 )}
+              </div>
+
+              {/* Fields layer — on top of drawing overlay */}
+              <div className="absolute inset-0 pointer-events-none">
+                {fields
+                  .filter((f) => f.page === currentPage)
+                  .map((field) => (
+                    <div
+                      key={field.id}
+                      className={cn(
+                        "absolute border-2 rounded-sm flex items-center justify-between px-1 pointer-events-auto cursor-move",
+                        FIELD_TYPE_COLORS[field.type] || "bg-primary/30 border-primary"
+                      )}
+                      style={{
+                        left: `${field.x * 100}%`,
+                        top: `${field.y * 100}%`,
+                        width: `${field.w * 100}%`,
+                        height: `${field.h * 100}%`,
+                      }}
+                      onMouseDown={(e) => handleFieldMouseDown(e, field)}
+                    >
+                      <span className="text-[10px] font-medium truncate text-foreground select-none">
+                        {field.type}
+                      </span>
+                      <button
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteField(field.id);
+                        }}
+                        className="shrink-0 rounded-full bg-destructive/80 p-0.5 text-destructive-foreground hover:bg-destructive cursor-pointer"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </div>
+                  ))}
               </div>
             </div>
           </Document>
