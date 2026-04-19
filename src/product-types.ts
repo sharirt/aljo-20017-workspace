@@ -1433,6 +1433,11 @@ export const StaffTimesheetPage = {
   pageName: "StaffTimesheet",
 } as const;
 
+export const WalkthroughPage = {
+  pageBlockId: "69e4ead8fd87862a92f3aa61",
+  pageName: "Walkthrough",
+} as const;
+
 export type AdminAssignStaffToShiftActionInputActionEnum =
   | "assign"
   | "unassign";
