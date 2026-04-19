@@ -7,6 +7,7 @@ import {
   ShiftApplicationsEntity,
   ShiftsEntity,
   TimeLogsEntity,
+  FacilitiesEntity,
   LoginPage,
   FacilityDashboardPage,
 } from "@/product-types";
@@ -68,12 +69,24 @@ export default function FMTimesheetPage() {
     TimeLogsEntity
   );
 
+  const { data: allFacilities, isLoading: loadingFacilities } = useEntityGetAll(
+    FacilitiesEntity,
+    undefined,
+    { enabled: !!facilityProfileId }
+  );
+
   const isLoading =
     loadingFmProfile ||
     loadingShifts ||
     loadingApplications ||
     loadingStaffProfiles ||
-    loadingTimeLogs;
+    loadingTimeLogs ||
+    loadingFacilities;
+
+  const activeFacility = useMemo(() => {
+    if (!allFacilities || !facilityProfileId) return null;
+    return allFacilities.find((f) => f.id === facilityProfileId) ?? null;
+  }, [allFacilities, facilityProfileId]);
 
   const monthStart = startOfMonth(selectedMonth);
   const monthEnd = endOfMonth(selectedMonth);
@@ -147,6 +160,12 @@ export default function FMTimesheetPage() {
         clockOutTime: timeLog?.clockOutTime,
         breakMinutes: timeLog?.breakMinutes,
         totalHours: timeLog?.totalHours,
+        clockInLat: timeLog?.clockInLat,
+        clockInLng: timeLog?.clockInLng,
+        clockOutLat: timeLog?.clockOutLat,
+        clockOutLng: timeLog?.clockOutLng,
+        geofenceStatus: timeLog?.geofenceStatus,
+        clockOutOutsideGeofence: timeLog?.clockOutOutsideGeofence,
       };
     });
   }, [monthShifts, staffIdByShiftId, staffNameById, timeLogByShiftId]);
@@ -323,6 +342,9 @@ export default function FMTimesheetPage() {
               <FMTimesheetTable
                 rows={filteredRows}
                 isLoading={isLoading}
+                facilityLat={activeFacility?.latitude}
+                facilityLng={activeFacility?.longitude}
+                facilityRadius={activeFacility?.geofenceRadius}
               />
               {!isLoading && (
                 <TimesheetFooter
