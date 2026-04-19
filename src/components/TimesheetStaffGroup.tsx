@@ -53,36 +53,45 @@ export const TimesheetStaffGroup = ({
     [onSaveAndApprove]
   );
 
-  // Early pay chip: sourced from earlyPayRequests prop, filtered by staffProfileId and approved/paid status
-  const earlyPayCount = useMemo(
-    () =>
-      (earlyPayRequests || []).filter(
-        (ep) =>
-          ep.staffProfileId === group.staffProfileId &&
-          (ep.status === "approved" || ep.status === "paid")
-      ).length,
-    [earlyPayRequests, group.staffProfileId]
-  );
+  // Derive pay period from the first timesheet in the group
+  const periodStart = group.timesheets[0]?.periodStart;
+  const periodEnd = group.timesheets[0]?.periodEnd;
 
-  const earlyPayTotal = useMemo(
-    () =>
-      (earlyPayRequests || [])
-        .filter(
-          (ep) =>
-            ep.staffProfileId === group.staffProfileId &&
-            (ep.status === "approved" || ep.status === "paid")
-        )
-        .reduce((sum, ep) => sum + (ep.amountApproved ?? 0), 0),
-    [earlyPayRequests, group.staffProfileId]
-  );
+  // Helper: check if an ISO datetime falls within the period range
+  const isWithinPeriod = (isoDate: string | undefined) => {
+    if (!isoDate || !periodStart || !periodEnd) return false;
+    const dateOnly = isoDate.slice(0, 10);
+    return dateOnly >= periodStart && dateOnly <= periodEnd;
+  };
 
-  // Bonus chip: sourced from the Bonuses table, filtered by staffProfileId
+  // Bonus chip: filtered by staffProfileId AND pay period
   const staffBonuses = useMemo(
     () =>
-      (bonuses || []).filter(
-        (b) => b.staffProfileId === group.staffProfileId
-      ),
-    [bonuses, group.staffProfileId]
+      (bonuses || []).filter((b) => {
+        if (b.staffProfileId !== group.staffProfileId) return false;
+        if (b.payPeriodStart) return b.payPeriodStart === periodStart;
+        return isWithinPeriod(b.awardedAt);
+      }),
+    [bonuses, group.staffProfileId, periodStart, periodEnd]
+  );
+
+  // Early pay chip: filtered by staffProfileId, status, AND pay period
+  const periodEarlyPay = useMemo(
+    () =>
+      (earlyPayRequests || []).filter((ep) => {
+        if (ep.staffProfileId !== group.staffProfileId) return false;
+        if (ep.status !== "approved" && ep.status !== "paid") return false;
+        if (ep.periodStart) return ep.periodStart === periodStart;
+        return isWithinPeriod(ep.requestedAt);
+      }),
+    [earlyPayRequests, group.staffProfileId, periodStart, periodEnd]
+  );
+
+  const earlyPayCount = periodEarlyPay.length;
+
+  const earlyPayTotal = useMemo(
+    () => periodEarlyPay.reduce((sum, ep) => sum + (ep.amountApproved ?? 0), 0),
+    [periodEarlyPay]
   );
 
   const bonusCount = useMemo(() => staffBonuses.length, [staffBonuses]);
