@@ -1,6 +1,7 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
   useEntityGetAll,
+  useEntityUpdate,
   useExecuteAction,
   useUser,
 } from "@blocksdiy/blocks-client-sdk/reactSdk";
@@ -62,13 +63,43 @@ export default function AdminShiftManagement() {
     refetch: refetchApplications,
   } = useEntityGetAll(ShiftApplicationsEntity);
   const { data: timeLogsRaw } = useEntityGetAll(TimeLogsEntity);
+  // Update hook for auto-completing expired shifts
+  const { updateFunction: updateShift } = useEntityUpdate(ShiftsEntity);
+
   // Action
   const { executeFunction: executeAssign, isLoading: isExecutingAction } =
     useExecuteAction(AdminAssignStaffToShiftAction);
 
+  // Auto-complete expired open shifts (run once when data loads)
+  const hasAutoCompleted = useRef(false);
+  useEffect(() => {
+    if (hasAutoCompleted.current || !shiftsRaw || isLoadingShifts) return;
+    hasAutoCompleted.current = true;
+
+    const now = new Date();
+    const expiredOpenShifts = (shiftsRaw as ShiftWithId[]).filter((s) => {
+      if (s.status !== "open" || !s.endDateTime) return false;
+      try {
+        return parseISO(s.endDateTime) < now;
+      } catch {
+        return false;
+      }
+    });
+
+    if (expiredOpenShifts.length === 0) return;
+
+    Promise.all(
+      expiredOpenShifts.map((s) =>
+        updateShift({ id: s.id, data: { status: "completed" } })
+      )
+    ).then(() => {
+      refetchShifts();
+    });
+  }, [shiftsRaw, isLoadingShifts, updateShift, refetchShifts]);
+
   // Filter state
   const [filters, setFilters] = useState<ShiftFiltersState>({
-    status: "all",
+    status: "open",
     facilityId: "all",
     role: "all",
     startDate: "",
