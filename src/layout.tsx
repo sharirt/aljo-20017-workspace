@@ -325,7 +325,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   )}
                 >
                   <div className="relative">
-                    <MoreHorizontal className="size-5 shrink-0" />
+                    <User className="size-5 shrink-0" />
                     {navigationItems.slice(5).some((i) => i.badge) && (
                       <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
                         {navigationItems.slice(5).find((i) => i.badge)?.badge}
