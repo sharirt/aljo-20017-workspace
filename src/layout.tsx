@@ -59,7 +59,6 @@ import {
   ChevronsUpDown,
   CheckCircle,
   ArrowLeftRight,
-  BookOpen,
 } from "lucide-react";
 import {
   ProfilePage,
@@ -92,7 +91,6 @@ import {
   AdminHelpPage,
   FacilityManagerHelpPage,
   StaffHelpPage,
-  WalkthroughPage,
   StaffTimesheetPage,
   MessagesEntity,
   StaffProfilesEntity,
@@ -209,7 +207,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         { title: "Settings", url: getPageUrl(AdminSettingsPage), icon: Settings, badge: "" },
         { title: "Contract Templates", url: getPageUrl(AdminContractTemplatesPage), icon: FileSignature, badge: "" },
         { title: "Profile", url: getPageUrl(ProfilePage), icon: UserCircle, badge: "" },
-        { title: "Walkthrough", url: getPageUrl(WalkthroughPage), icon: BookOpen, badge: "" },
         { title: "Help", url: getPageUrl(AdminHelpPage), icon: HelpCircle, badge: "" },
       ];
     }
@@ -221,7 +218,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         { title: "Timesheet", url: getPageUrl(FMTimesheetPage), icon: FileSpreadsheet, badge: "" },
         { title: "Invoices", url: getPageUrl(FMInvoicesPage), icon: Receipt, badge: "" },
         { title: "Messages", url: getPageUrl(FMMessagesPage), icon: MessageCircle, badge: unreadBadgeText },
-        { title: "Walkthrough", url: getPageUrl(WalkthroughPage), icon: BookOpen, badge: "" },
         { title: "Help", url: getPageUrl(FacilityManagerHelpPage), icon: HelpCircle, badge: "" },
       ];
     }
@@ -238,7 +234,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         { title: "Career Path", url: getPageUrl(StaffCareerPathPage), icon: TrendingUp, badge: "" },
         { title: "Messages", url: getPageUrl(StaffMessagesPage), icon: MessageCircle, badge: unreadBadgeText },
         { title: "My Profile", url: getPageUrl(StaffMyProfilePage), icon: UserCircle, badge: "" },
-        { title: "Walkthrough", url: getPageUrl(WalkthroughPage), icon: BookOpen, badge: "" },
         { title: "Help", url: getPageUrl(StaffHelpPage), icon: HelpCircle, badge: "" },
       ];
     }

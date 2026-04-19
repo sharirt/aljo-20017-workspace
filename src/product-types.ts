@@ -221,6 +221,8 @@ export type FacilitiesEntityStatusEnum = "active" | "inactive";
  * Stores facility information including contact details, type, and address. Referenced by facility managers and shift listings.
  */
 export interface IFacilitiesEntity {
+  /** Postal code for the facility address  */
+  postalCode?: string;
   /** Geofencing enforcement mode: strict blocks clock-in outside radius, flag allows but records exception  */
   geofenceMode?: FacilitiesEntityGeofenceModeEnum;
   /** Primary contact person name at the facility  */
@@ -247,8 +249,6 @@ export interface IFacilitiesEntity {
   province?: string;
   /** Geofence radius in meters for clock-in verification, default 200 meters  */
   geofenceRadius?: number;
-  /** Postal code for the facility address  */
-  postalCode?: string;
 }
 
 export const FacilitiesEntity = {
@@ -1433,11 +1433,6 @@ export const StaffTimesheetPage = {
   pageName: "StaffTimesheet",
 } as const;
 
-export const WalkthroughPage = {
-  pageBlockId: "69e4ead8fd87862a92f3aa61",
-  pageName: "Walkthrough",
-} as const;
-
 export type AdminAssignStaffToShiftActionInputActionEnum =
   | "assign"
   | "unassign";
@@ -2015,12 +2010,12 @@ export const CompleteOrientationAction = {
  * DenyOrientationRequest input payload
  */
 export interface IDenyOrientationRequestActionInput {
-  /** Reason for denying the orientation request  */
-  denialReason?: string;
+  /** The ID of the Orientations record to delete  */
+  orientationId: string;
   /** Email of the facility manager denying the request  */
   deniedByEmail: string;
-  /** The ID of the Orientations record to deny  */
-  orientationId: string;
+  /** Reason for denying the orientation request (optional, for logging)  */
+  denialReason?: string;
 }
 
 /**
@@ -2033,7 +2028,7 @@ export interface IDenyOrientationRequestActionOutput {
 
 /**
  * DenyOrientationRequestAction
- * Execute code action
+ * Denies an orientation request by deleting the Orientations record entirely, so the staff member can request orientation again in the future.
  */
 export const DenyOrientationRequestAction = {
   actionBlockId: "69c51955792a18ec31893ca4",

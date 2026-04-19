@@ -137,19 +137,18 @@ export const OrientationRequestsSection = ({
 
   // Handle deny confirm
   const handleDenyConfirm = useCallback(
-    async (data: { orientationId: string; reason: string }) => {
+    async (orientationId: string) => {
       try {
         await denyOrientation({
-          orientationId: data.orientationId,
-          denialReason: data.reason || undefined,
+          orientationId,
           deniedByEmail: user.email || "",
         });
 
-        toast.success("Orientation request denied");
+        toast.success("Orientation request removed");
         setSelectedForDeny(null);
         refetchOrientations();
       } catch {
-        toast.error("Failed to deny orientation request. Please try again.");
+        toast.error("Failed to remove orientation request. Please try again.");
       }
     },
     [denyOrientation, user.email, refetchOrientations]

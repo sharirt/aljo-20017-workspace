@@ -1,4 +1,3 @@
-import { useState, useCallback } from "react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -8,8 +7,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import type { IOrientationsEntity } from "@/product-types";
 
@@ -18,10 +15,7 @@ interface DenyOrientationDialogProps {
   staffName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (data: {
-    orientationId: string;
-    reason: string;
-  }) => Promise<void>;
+  onConfirm: (orientationId: string) => Promise<void>;
   isDenying: boolean;
 }
 
@@ -33,61 +27,27 @@ export const DenyOrientationDialog = ({
   onConfirm,
   isDenying,
 }: DenyOrientationDialogProps) => {
-  const [reason, setReason] = useState("");
-
-  const resetForm = useCallback(() => {
-    setReason("");
-  }, []);
-
-  const handleOpenChange = useCallback(
-    (nextOpen: boolean) => {
-      if (!nextOpen) {
-        resetForm();
-      }
-      onOpenChange(nextOpen);
-    },
-    [onOpenChange, resetForm]
-  );
-
-  const handleConfirm = useCallback(async () => {
+  const handleConfirm = async () => {
     if (!orientation) return;
-
-    await onConfirm({
-      orientationId: orientation.id,
-      reason: reason.trim(),
-    });
-
-    resetForm();
-  }, [orientation, reason, onConfirm, resetForm]);
+    await onConfirm(orientation.id);
+  };
 
   return (
-    <AlertDialog open={open} onOpenChange={handleOpenChange}>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Deny Orientation Request</AlertDialogTitle>
+          <AlertDialogTitle>Remove Orientation Request</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to deny the orientation request from{" "}
-            <span className="font-medium text-foreground">{staffName}</span>?
+            This will remove the orientation request from{" "}
+            <span className="font-medium text-foreground">{staffName}</span>.
+            The staff member will be able to request orientation again.
           </AlertDialogDescription>
         </AlertDialogHeader>
-
-        <div className="grid gap-2 py-2">
-          <Label htmlFor="deny-reason">
-            Reason <span className="text-muted-foreground font-normal">(optional)</span>
-          </Label>
-          <Textarea
-            id="deny-reason"
-            placeholder="Provide a reason for denying this request..."
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            rows={3}
-          />
-        </div>
 
         <AlertDialogFooter>
           <Button
             variant="outline"
-            onClick={() => handleOpenChange(false)}
+            onClick={() => onOpenChange(false)}
             disabled={isDenying}
           >
             Cancel
@@ -100,10 +60,10 @@ export const DenyOrientationDialog = ({
             {isDenying ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Denying...
+                Removing...
               </>
             ) : (
-              "Deny Request"
+              "Remove Request"
             )}
           </Button>
         </AlertDialogFooter>
