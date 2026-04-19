@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Loader2, Upload, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -234,13 +235,15 @@ export const UploadTemplateDialog = ({
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="role-name">Signing Role Name</Label>
-              <Input
-                id="role-name"
-                placeholder="Staff"
-                value={roleName}
-                onChange={(e) => setRoleName(e.target.value)}
-                className="h-11"
-              />
+              <Select value={roleName} onValueChange={setRoleName}>
+                <SelectTrigger id="role-name" className="h-11">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Staff">Staff</SelectItem>
+                  <SelectItem value="Facility Manager">Facility Manager</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="pdf-file">PDF File</Label>
