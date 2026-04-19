@@ -21,6 +21,7 @@ import {
   Send,
   CheckCircle,
   AlertTriangle,
+  Download,
 } from "lucide-react";
 import { InvoiceStatusBadge } from "@/components/InvoiceStatusBadge";
 import {
@@ -80,6 +81,63 @@ export const InvoiceCard = ({
       invoice.invoiceStatus !== "paid" && isOverdue(invoice.dueDate),
     [invoice.invoiceStatus, invoice.dueDate]
   );
+
+  const handleDownload = () => {
+    const escapeCsv = (val: string) => {
+      if (val?.includes(",") || val?.includes('"') || val?.includes("\n")) {
+        return `"${val.replace(/"/g, '""')}"`;
+      }
+      return val ?? "";
+    };
+
+    const rows: string[] = [];
+    rows.push("Invoice Number,Facility,Period Start,Period End,Status,Subtotal,HST Rate,HST Amount,Total,Due Date,Generated Date");
+    rows.push(
+      [
+        escapeCsv(invoice.invoiceNumber || ""),
+        escapeCsv(facilityName),
+        invoice.periodStart || "",
+        invoice.periodEnd || "",
+        invoice.invoiceStatus || "",
+        invoice.subtotal?.toFixed(2) ?? "",
+        invoice.hstRate != null ? `${invoice.hstRate}%` : "",
+        invoice.hstAmount?.toFixed(2) ?? "",
+        invoice.total?.toFixed(2) ?? "",
+        invoice.dueDate || "",
+        invoice.createdAt || "",
+      ].join(",")
+    );
+
+    rows.push("");
+    rows.push("Staff Name,Role,Date,Hours,Billing Rate,Multiplier,Short Notice,Holiday,Line Total");
+    invoice.lineItems?.forEach((item: any) => {
+      rows.push(
+        [
+          escapeCsv(item.staffName || ""),
+          item.roleType || item.staffRole || "",
+          item.date || "",
+          item.netHours ?? item.hours ?? "",
+          item.billingRate?.toFixed(2) ?? "",
+          item.multiplier ?? "1",
+          item.isShortNotice ? "Yes" : "No",
+          item.isHoliday ? "Yes" : "No",
+          item.lineTotal?.toFixed(2) ?? "",
+        ].join(",")
+      );
+    });
+
+    const csvContent = rows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const fileName = `${(invoice.invoiceNumber || "invoice").replace(/\s+/g, "_")}_${facilityName.replace(/\s+/g, "_")}.csv`;
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   const handleConfirm = useCallback(() => {
     if (confirmAction === "sent") {
@@ -156,6 +214,15 @@ export const InvoiceCard = ({
             >
               <Eye className="mr-2 h-4 w-4" />
               View Details
+            </Button>
+
+            <Button
+              variant="outline"
+              className="h-11"
+              onClick={handleDownload}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download
             </Button>
 
             {invoice.invoiceStatus === "draft" && (
