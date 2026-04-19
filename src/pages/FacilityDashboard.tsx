@@ -24,7 +24,9 @@ import { OrientationManagementSection } from "@/components/OrientationManagement
 import { OrientationRequestsSection } from "@/components/OrientationRequestsSection";
 import { StaffActivityCard } from "@/components/StaffActivityCard";
 import { FMStaffDocumentsSheet } from "@/components/FMStaffDocumentsSheet";
-import { Calendar, Clock, CheckCircle, Plus, AlertCircle } from "lucide-react";
+import { Calendar, Clock, CheckCircle, Plus, AlertCircle, RotateCcw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useState, useMemo, useCallback } from "react";
 import {
   isToday,
@@ -32,6 +34,8 @@ import {
   startOfWeek,
   endOfWeek,
   isWithinInterval,
+  format,
+  addDays,
 } from "date-fns";
 import { StatsCard } from "@/components/StatsCard";
 import { FacilityShiftCard, EmptyShiftCard } from "@/components/FacilityShiftCard";
@@ -64,6 +68,12 @@ function FacilityDashboardContent({
   // Filters
   const [statusFilter, setStatusFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
+
+  // Date range filter
+  const defaultFromDate = format(new Date(), "yyyy-MM-dd");
+  const defaultToDate = format(addDays(new Date(), 7), "yyyy-MM-dd");
+  const [fromDate, setFromDate] = useState(defaultFromDate);
+  const [toDate, setToDate] = useState(defaultToDate);
 
   // Sheet state
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -149,6 +159,17 @@ function FacilityDashboardContent({
       .filter((s) => {
         if (statusFilter !== "all" && s.status !== statusFilter) return false;
         if (roleFilter !== "all" && s.requiredRole !== roleFilter) return false;
+        // Date range filter
+        if (fromDate || toDate) {
+          if (!s.startDateTime) return false;
+          try {
+            const shiftDateStr = s.startDateTime.slice(0, 10);
+            if (fromDate && shiftDateStr < fromDate) return false;
+            if (toDate && shiftDateStr > toDate) return false;
+          } catch {
+            return false;
+          }
+        }
         return true;
       })
       .sort((a, b) => {
@@ -160,7 +181,7 @@ function FacilityDashboardContent({
           return 0;
         }
       });
-  }, [shifts, statusFilter, roleFilter]);
+  }, [shifts, statusFilter, roleFilter, fromDate, toDate]);
 
   // Selected shift for editing
   const selectedShift = useMemo(() => {
@@ -366,6 +387,43 @@ function FacilityDashboardContent({
           onRoleChange={handleRoleFilterChange}
           resultsCount={filteredShifts.length}
         />
+
+        {/* Date Range Filter */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="grid grid-cols-2 gap-3 flex-1 max-w-md">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="shift-from-date" className="text-sm text-muted-foreground">From</Label>
+              <Input
+                id="shift-from-date"
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="shift-to-date" className="text-sm text-muted-foreground">To</Label>
+              <Input
+                id="shift-to-date"
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+              />
+            </div>
+          </div>
+          {(fromDate !== defaultFromDate || toDate !== defaultToDate) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setFromDate(defaultFromDate);
+                setToDate(defaultToDate);
+              }}
+            >
+              <RotateCcw data-icon="inline-start" />
+              Reset dates
+            </Button>
+          )}
+        </div>
 
         {/* Shift Cards Grid */}
         {isLoading ? (
