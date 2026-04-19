@@ -6,22 +6,11 @@ import {
   OrientationsEntity,
   FacilitiesEntity,
 } from "@/product-types";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Users,
   Calendar,
@@ -32,24 +21,21 @@ import {
   XCircle,
   UserCheck,
   ShieldAlert,
-  Wallet,
   GraduationCap,
   Building2,
 } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo } from "react";
 import { format, parseISO, isToday } from "date-fns";
 import { StatsCard } from "@/components/StatsCard";
 import { RoleUpgradeAlert } from "@/components/RoleUpgradeAlert";
 import { PayPeriodBanner } from "@/components/PayPeriodBanner";
 import { PendingReviewsSection } from "@/components/PendingReviewsSection";
-import { toast } from "sonner";
+import { GeneratePayrollDialog } from "@/components/GeneratePayrollDialog";
 import { Link } from "react-router";
 import { getPageUrl, cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getRoleBadgeColor } from "@/utils/shiftUtils";
-import { getCurrentPayPeriod, getPayPeriodLabel } from "@/utils/reportUtils";
 import { AdminStaffManagementPage as AdminStaffManagementPageConfig } from "@/product-types";
-import { useGeneratePayroll } from "@/hooks/useGeneratePayroll";
 
 export default function AdminDashboardPage() {
   const { data: staffProfiles, isLoading: loadingStaff } = useEntityGetAll(StaffProfilesEntity);
@@ -58,35 +44,16 @@ export default function AdminDashboardPage() {
   const { data: orientations, isLoading: loadingOrientations } = useEntityGetAll(OrientationsEntity);
   const { data: facilities, isLoading: loadingFacilities } = useEntityGetAll(FacilitiesEntity);
 
-  const [payrollDialogOpen, setPayrollDialogOpen] = useState(false);
-  const [periodStart, setPeriodStart] = useState("");
-  const [periodEnd, setPeriodEnd] = useState("");
-  const { executeFunction: generatePayroll, isLoading: generatingPayroll } = useGeneratePayroll();
-
-  // Current pay period for dialog auto-population
-  const currentPayPeriod = useMemo(() => getCurrentPayPeriod(), []);
-  const currentPayPeriodLabel = useMemo(() => getPayPeriodLabel(currentPayPeriod), [currentPayPeriod]);
-
-  // Auto-populate payroll dialog with current pay period dates when opened
-  useEffect(() => {
-    if (payrollDialogOpen) {
-      const startStr = format(currentPayPeriod.start, "yyyy-MM-dd");
-      const endStr = format(currentPayPeriod.end, "yyyy-MM-dd");
-      setPeriodStart(startStr);
-      setPeriodEnd(endStr);
-    }
-  }, [payrollDialogOpen, currentPayPeriod]);
-
   // Onboarding & Compliance stats
   const onboardingStats = useMemo(() => {
     const pendingOnboarding = staffProfiles?.filter(
       s => s.onboardingStatus === "incomplete" || s.onboardingStatus === "pending_review"
     )?.length || 0;
-    
+
     const nonCompliant = staffProfiles?.filter(
       s => s.complianceStatus !== "compliant"
     )?.length || 0;
-    
+
     return { pendingOnboarding, nonCompliant };
   }, [staffProfiles]);
 
@@ -137,63 +104,6 @@ export default function AdminDashboardPage() {
       }
     });
   }, [shifts]);
-
-  const handleGeneratePayroll = async () => {
-    if (!periodStart || !periodEnd) {
-      toast.error("Please enter both start and end dates");
-      return;
-    }
-
-    // Simple date validation
-    if (periodEnd < periodStart) {
-      toast.error("Period end date must be after start date");
-      return;
-    }
-
-    // Client-side duplicate prevention check
-    const existingCount = (timesheets || []).filter(
-      (ts) => ts.periodStart === periodStart && ts.periodEnd === periodEnd
-    ).length;
-    if (existingCount > 0) {
-      toast.error(`Payroll already generated for this period (${existingCount} timesheets exist)`);
-      return;
-    }
-
-    try {
-      const result = await generatePayroll({
-        periodStart,
-        periodEnd,
-      });
-
-      // Handle errors returned in the result
-      if (result.error) {
-        toast.error(result.error);
-        return;
-      }
-
-      // Compute enhanced output fields
-      const startDate = parseISO(periodStart);
-      const endDate = parseISO(periodEnd);
-      const periodLabel = `${format(startDate, "MMM d")} – ${format(endDate, "MMM d, yyyy")}`;
-      const anchorDate = new Date(2025, 0, 6);
-      const daysSinceAnchor = Math.round((startDate.getTime() - anchorDate.getTime()) / (24 * 60 * 60 * 1000));
-      const periodNumber = daysSinceAnchor >= 0 ? Math.floor(daysSinceAnchor / 14) + 1 : 1;
-
-      const earlyPayMessage =
-        result.totalEarlyPayDeducted > 0
-          ? ` Early pay deducted: $${result.totalEarlyPayDeducted.toFixed(2)} (${result.earlyPayRequestsMarkedPaid} request${result.earlyPayRequestsMarkedPaid !== 1 ? "s" : ""} marked paid).`
-          : "";
-      toast.success(
-        `Payroll generated for ${periodLabel} (Period #${periodNumber}). Created ${result.timesheetsCreated} timesheets totaling $${result.totalGrossPay.toFixed(2)}.${earlyPayMessage}`
-      );
-      setPayrollDialogOpen(false);
-      setPeriodStart("");
-      setPeriodEnd("");
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to generate payroll";
-      toast.error(message);
-    }
-  };
 
   const getOnboardingBadge = (status?: string) => {
     if (status === "approved") {
@@ -262,7 +172,7 @@ export default function AdminDashboardPage() {
   const staffManagementPageUrl = getPageUrl(AdminStaffManagementPageConfig);
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <p className="text-muted-foreground">Platform-wide overview and metrics</p>
@@ -278,13 +188,13 @@ export default function AdminDashboardPage() {
       />
 
       {/* Onboarding & Compliance Section */}
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5" />
           <h2 className="text-lg font-semibold">Onboarding & Compliance</h2>
         </div>
         <div className="h-px bg-border" />
-        
+
         {/* KPI Cards */}
         <div className="grid gap-4 grid-cols-2">
           {/* Pending Onboarding Card */}
@@ -351,7 +261,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="space-y-3">
+              <div className="flex flex-col gap-3">
                 <Skeleton className="h-16 w-full" />
                 <Skeleton className="h-16 w-full" />
                 <Skeleton className="h-16 w-full" />
@@ -363,17 +273,17 @@ export default function AdminDashboardPage() {
                 <p className="text-xs text-muted-foreground">No staff members found</p>
               </div>
             ) : (
-              <div className="space-y-0">
+              <div>
                 {recentRegistrations.map((staff, index) => (
                   <Link
-                    key={staff.id}
+                    key={(staff as any).id}
                     to={staffManagementPageUrl}
                     className={cn(
                       "flex items-center gap-3 py-3 px-2 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors",
                       index !== recentRegistrations.length - 1 && "border-b"
                     )}
                   >
-                    <Avatar className="h-9 w-9">
+                    <Avatar className="size-9">
                       <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
                         {getInitials(staff)}
                       </AvatarFallback>
@@ -396,7 +306,7 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
-      {/* KPI Cards - 2 columns on mobile, 4 on desktop; all 6 cards in one unified grid */}
+      {/* KPI Cards */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Active Staff"
@@ -444,63 +354,11 @@ export default function AdminDashboardPage() {
 
       {/* Generate Payroll Button */}
       <div className="flex justify-end">
-        <Dialog open={payrollDialogOpen} onOpenChange={setPayrollDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Wallet className="h-4 w-4" />
-              Generate Payroll
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Generate Payroll</DialogTitle>
-              <DialogDescription>
-                Enter the pay period dates to generate timesheets for completed shifts
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <p className="text-sm text-muted-foreground">
-                Current period: <span className="font-medium text-foreground">{currentPayPeriodLabel}</span>
-              </p>
-              <div className="space-y-2">
-                <Label htmlFor="periodStart">Period Start Date</Label>
-                <Input
-                  id="periodStart"
-                  type="date"
-                  value={periodStart}
-                  onChange={(e) => setPeriodStart(e.target.value)}
-                  disabled={generatingPayroll}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="periodEnd">Period End Date</Label>
-                <Input
-                  id="periodEnd"
-                  type="date"
-                  value={periodEnd}
-                  onChange={(e) => setPeriodEnd(e.target.value)}
-                  disabled={generatingPayroll}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setPayrollDialogOpen(false)}
-                disabled={generatingPayroll}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleGeneratePayroll} disabled={generatingPayroll}>
-                {generatingPayroll ? "Generating..." : "Generate"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <GeneratePayrollDialog timesheets={timesheets as any} />
       </div>
 
       {/* Alerts Section */}
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         <h2 className="text-xl font-semibold">Alerts</h2>
 
         {/* Expired Compliance Alert */}
@@ -511,9 +369,9 @@ export default function AdminDashboardPage() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Staff with Expired Compliance</AlertTitle>
             <AlertDescription>
-              <div className="mt-2 space-y-2">
+              <div className="mt-2 flex flex-col gap-2">
                 {expiredStaff?.map((staff) => (
-                  <div key={staff.id} className="flex items-center justify-between">
+                  <div key={(staff as any).id} className="flex items-center justify-between">
                     <span className="text-sm">{staff.email}</span>
                     <Badge variant="destructive" className="gap-1">
                       <XCircle className="h-3 w-3" />
@@ -542,9 +400,9 @@ export default function AdminDashboardPage() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Open Shifts Today</AlertTitle>
             <AlertDescription>
-              <div className="mt-2 space-y-2">
+              <div className="mt-2 flex flex-col gap-2">
                 {todayOpenShifts?.map((shift) => (
-                  <div key={shift.id} className="flex items-center justify-between">
+                  <div key={(shift as any).id} className="flex items-center justify-between">
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">
                         {shift.requiredRole || "Staff"} - {shift.headcount || 1} position{(shift.headcount || 1) > 1 ? "s" : ""}
