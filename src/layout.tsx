@@ -272,17 +272,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (isMobile) {
     return (
-      <div className="flex min-h-screen flex-col pb-14">
-        <header className="sticky top-0 z-40 flex h-12 items-center justify-between border-b bg-background px-4">
+      <div className="flex h-screen flex-col overflow-hidden">
+        <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center justify-between border-b bg-background px-4">
           <span className="text-sm font-semibold">ALJO CareCrew</span>
           <NotificationBell />
         </header>
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-y-auto">
           {children}
         </main>
 
         {/* Mobile Bottom Tab Bar - icons only */}
-        <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-card shadow-lg">
+        <nav className="shrink-0 z-50 border-t bg-card shadow-lg">
           <div className="flex h-14 items-center justify-around px-2">
             {navigationItems.slice(0, 5).map((item) => {
               const isActive = location.pathname?.startsWith(item.url) && item.url !== "#";
