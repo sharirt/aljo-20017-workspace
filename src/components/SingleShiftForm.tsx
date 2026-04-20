@@ -29,7 +29,7 @@ import { ShiftTypeToggle } from "@/components/ShiftTypeToggle";
 import { StaffPicker } from "@/components/StaffPicker";
 import type { ShiftType } from "@/components/ShiftTypeToggle";
 import { toast } from "sonner";
-import { CalendarIcon, Plus, Minus, Loader2, Loader } from "lucide-react";
+import { CalendarIcon, Plus, Minus, Loader2, Loader, Lock } from "lucide-react";
 import { format, isBefore, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { shouldAutoSchedule } from "@/utils/autoScheduleUtils";
@@ -435,20 +435,18 @@ export const SingleShiftForm = ({ managerProfile }: SingleShiftFormProps) => {
 
           {/* Rate Fields */}
           {requiredRole && (
-            <div className="space-y-2">
-              <Label htmlFor="billing-rate">Billing Rate ($/hr)</Label>
-              <Input
-                id="billing-rate"
-                type="number"
-                step="0.01"
-                min="0.01"
-                value={billingRate}
-                onChange={(e) => setBillingRate(e.target.value)}
-                placeholder="0.00"
-                className="h-11 text-base"
-              />
-              {requiredRole && !billingRate && (
-                <p className="text-chart-3 text-xs">
+            <div className="flex flex-col gap-2">
+              <Label>Billing Rate ($/hr)</Label>
+              {billingRate ? (
+                <div className="flex h-11 items-center gap-2 rounded-md border border-input bg-muted px-3">
+                  <Lock className="size-4 text-muted-foreground shrink-0" />
+                  <span className="text-base text-foreground font-medium">
+                    ${Number(billingRate).toFixed(2)} / hr
+                  </span>
+                  <span className="ml-auto text-xs text-muted-foreground">Set by admin</span>
+                </div>
+              ) : (
+                <p className="text-destructive text-xs">
                   Billing rate not configured for this role. Contact ALJO admin.
                 </p>
               )}
