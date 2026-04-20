@@ -1,8 +1,7 @@
-import { format, addDays } from "date-fns";
+import { format, addDays, differenceInCalendarDays } from "date-fns";
 
-/** Bi-weekly pay period anchor: Monday, January 6, 2025 (midnight local) */
-const PAY_PERIOD_ANCHOR = new Date(2025, 0, 6);
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
+/** Bi-weekly pay period anchor: Monday, April 13, 2025 (midnight local) */
+const PAY_PERIOD_ANCHOR = new Date(2025, 3, 13);
 const PERIOD_LENGTH = 14;
 
 export interface AnchorAlignedPeriod {
@@ -25,12 +24,12 @@ export function getAnchorAlignedPeriod(offsetFromCurrent: number): AnchorAligned
   // Strip time from "now" to get a clean day comparison
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  const daysElapsed = Math.floor((today.getTime() - PAY_PERIOD_ANCHOR.getTime()) / MS_PER_DAY);
+  const daysElapsed = differenceInCalendarDays(today, PAY_PERIOD_ANCHOR);
   const currentIndex = daysElapsed >= 0 ? Math.floor(daysElapsed / PERIOD_LENGTH) : 0;
   const targetIndex = currentIndex + offsetFromCurrent;
 
-  const start = new Date(PAY_PERIOD_ANCHOR.getTime() + targetIndex * PERIOD_LENGTH * MS_PER_DAY);
-  const end = addDays(start, 13); // inclusive 14-day window
+  const start = addDays(PAY_PERIOD_ANCHOR, targetIndex * PERIOD_LENGTH);
+  const end = addDays(start, 13); // inclusive 14-day window (Mon–Sun)
 
   const periodNumber = targetIndex + 1; // 1-indexed
   const label = `${format(start, "MMM d")} – ${format(end, "MMM d, yyyy")}`;
