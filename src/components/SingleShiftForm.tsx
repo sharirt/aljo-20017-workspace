@@ -29,7 +29,7 @@ import { ShiftTypeToggle } from "@/components/ShiftTypeToggle";
 import { StaffPicker } from "@/components/StaffPicker";
 import type { ShiftType } from "@/components/ShiftTypeToggle";
 import { toast } from "sonner";
-import { CalendarIcon, Plus, Minus, Loader2, Info, Loader } from "lucide-react";
+import { CalendarIcon, Plus, Minus, Loader2, Loader } from "lucide-react";
 import { format, isBefore, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { shouldAutoSchedule } from "@/utils/autoScheduleUtils";
@@ -155,9 +155,7 @@ export const SingleShiftForm = ({ managerProfile }: SingleShiftFormProps) => {
   const validateForm = useMemo(() => {
     if (!requiredRole) return { valid: false, message: "Please select a required role" };
 
-    if (!staffRate || parseFloat(staffRate) <= 0) {
-      return { valid: false, message: "Staff rate is required" };
-    }
+    // Staff rate is silently auto-populated, no validation needed from FM
 
     if (!isAssignMode) {
       if (headcount < 1 || headcount > 20) return { valid: false, message: "Headcount must be between 1 and 20" };
@@ -437,48 +435,24 @@ export const SingleShiftForm = ({ managerProfile }: SingleShiftFormProps) => {
 
           {/* Rate Fields */}
           {requiredRole && (
-            <>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="staff-rate">Staff Rate ($/hr) *</Label>
-                  <Input
-                    id="staff-rate"
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    value={staffRate}
-                    onChange={(e) => setStaffRate(e.target.value)}
-                    placeholder="0.00"
-                    className="h-11 text-base"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="billing-rate">
-                    Billing Rate ($/hr){" "}
-                    <span className="text-muted-foreground text-xs">(read-only)</span>
-                  </Label>
-                  <Input
-                    id="billing-rate"
-                    type="number"
-                    value={billingRate}
-                    disabled
-                    className="h-11 text-base bg-muted/50 cursor-not-allowed"
-                    placeholder="Auto-populated"
-                  />
-                  {requiredRole && !billingRate && (
-                    <p className="text-chart-3 text-xs">
-                      Billing rate not configured for this role. Contact ALJO admin.
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
-                <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                <p className="text-xs text-muted-foreground">
-                  Staff rate is what the staff member earns per hour. Billing rate is what the facility is charged (managed by ALJO admin).
+            <div className="space-y-2">
+              <Label htmlFor="billing-rate">Billing Rate ($/hr)</Label>
+              <Input
+                id="billing-rate"
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={billingRate}
+                onChange={(e) => setBillingRate(e.target.value)}
+                placeholder="0.00"
+                className="h-11 text-base"
+              />
+              {requiredRole && !billingRate && (
+                <p className="text-chart-3 text-xs">
+                  Billing rate not configured for this role. Contact ALJO admin.
                 </p>
-              </div>
-            </>
+              )}
+            </div>
           )}
 
           {/* Staff Picker - only when assigning to staff */}

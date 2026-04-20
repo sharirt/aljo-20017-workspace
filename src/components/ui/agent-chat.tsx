@@ -794,6 +794,7 @@ export function AgentChat({
   const [agentChatData, setAgentChatData] = useState<AgentChatData | undefined>(
     undefined,
   );
+  const [memoryEnabled, setMemoryEnabled] = useState(false);
 
   const agentChatProps = agentChat.getAgentChatComponentProps();
   const { agentChatId, appId, token } = agentChatProps;
@@ -829,6 +830,7 @@ export function AgentChat({
         initialMessages,
         initialPrompt,
       });
+      setMemoryEnabled(agentChatBlockData.memoryEnabled === true);
     };
 
     fetchAgentChatData();
@@ -848,6 +850,7 @@ export function AgentChat({
       agentChatData={agentChatData}
       noPersistency={noPersistency || !user.isAuthenticated}
       {...props}
+      memoryEnabled={memoryEnabled}
     />
   );
 }
@@ -1137,9 +1140,9 @@ export function AgentChatSimple({
   size = 'md',
   variant = 'bubble',
   ...props
-}: AgentChatProps &
-  { withVoice?: boolean } &
-  VariantProps<typeof agentChatContentVariants> &
+}: AgentChatProps & { withVoice?: boolean } & VariantProps<
+    typeof agentChatContentVariants
+  > &
   React.ComponentProps<'div'>) {
   return (
     <AgentChat
