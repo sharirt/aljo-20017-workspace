@@ -1,7 +1,7 @@
 import { format, addDays, differenceInCalendarDays } from "date-fns";
 
-/** Bi-weekly pay period anchor: Monday, April 13, 2025 (midnight local) */
-const PAY_PERIOD_ANCHOR = new Date(2025, 3, 13);
+/** Bi-weekly pay period anchor: Monday, April 13, 2026 (midnight local) */
+const PAY_PERIOD_ANCHOR = new Date(2026, 3, 13);
 const PERIOD_LENGTH = 14;
 
 export interface AnchorAlignedPeriod {

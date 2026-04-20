@@ -1,12 +1,12 @@
 import './index.css';
+import AdminApplicationsComponent from './pages/AdminApplications';
+const AdminApplications = { id: '69c5194c792a18ec318931d4', name: 'AdminApplications', component: AdminApplicationsComponent };
+export { AdminApplications };
 import Layout from './layout';
 import { Toaster} from '@/components/ui/sonner';
 const LayoutComponent = ({ children }: { children: React.ReactNode }) => (<><Layout children={children} /><Toaster /></>);
 const AppLayout = { id: '69c51948792a18ec31892e4f', name: 'AppLayout', component: LayoutComponent };
 export { AppLayout };
-import AdminApplicationsComponent from './pages/AdminApplications';
-const AdminApplications = { id: '69c5194c792a18ec318931d4', name: 'AdminApplications', component: AdminApplicationsComponent };
-export { AdminApplications };
 import AdminContractTemplatesComponent from './pages/AdminContractTemplates';
 const AdminContractTemplates = { id: '69dfd5cc781c3c119fd68ea4', name: 'AdminContractTemplates', component: AdminContractTemplatesComponent };
 export { AdminContractTemplates };
