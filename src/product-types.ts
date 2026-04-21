@@ -221,6 +221,8 @@ export type FacilitiesEntityStatusEnum = "active" | "inactive";
  * Stores facility information including contact details, type, and address. Referenced by facility managers and shift listings.
  */
 export interface IFacilitiesEntity {
+  /** Postal code for the facility address  */
+  postalCode?: string;
   /** Geofencing enforcement mode: strict blocks clock-in outside radius, flag allows but records exception  */
   geofenceMode?: FacilitiesEntityGeofenceModeEnum;
   /** Primary contact person name at the facility  */
@@ -247,8 +249,6 @@ export interface IFacilitiesEntity {
   province?: string;
   /** Geofence radius in meters for clock-in verification, default 200 meters  */
   geofenceRadius?: number;
-  /** Postal code for the facility address  */
-  postalCode?: string;
 }
 
 export const FacilitiesEntity = {
@@ -355,6 +355,8 @@ export const FacilityManagerProfilesEntity = {
  * Stores statutory holidays by date and province. Used by payroll and invoice generation to determine if a shift falls on a holiday and apply the appropriate multiplier. Each row represents a single holiday occurrence for a specific year and province.
  */
 export interface IHolidaysEntity {
+  /** The calendar year of the holiday. Useful for filtering holidays by year.  */
+  year?: number;
   /** The Canadian province this holiday applies to. Default is 'Nova Scotia'. Allows future multi-province support.  */
   province?: string;
   /** The exact calendar date of the holiday (YYYY-MM-DD). Used for date-matching in payroll lookups.. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
@@ -363,8 +365,6 @@ export interface IHolidaysEntity {
   name?: string;
   /** Pay/billing multiplier applied when a shift falls on this holiday. Default is 1.5 (time and a half). Can be overridden per holiday if needed.  */
   multiplier?: number;
-  /** The calendar year of the holiday. Useful for filtering holidays by year.  */
-  year?: number;
 }
 
 export const HolidaysEntity = {
@@ -663,6 +663,8 @@ export type ShiftsEntityStatusEnum =
  * Stores shift opportunities including timing, requirements, and compensation. Created by facility managers and applied to by staff.
  */
 export interface IShiftsEntity {
+  /** Combined date and time for shift start. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  startDateTime?: string;
   /** Combined date and time for shift end. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   endDateTime?: string;
   /** The pay/billing multiplier for this shift if it falls on a holiday. Defaults to 1.0 (no multiplier). Set automatically to the holiday's multiplier (e.g. 1.5) when isHoliday is true.  */
@@ -697,8 +699,6 @@ export interface IShiftsEntity {
   headcount?: number;
   /** When true, this shift is hidden from the general staff marketplace and only visible to specific staff (e.g. favorites or directly assigned). Defaults to false (visible to all eligible staff).  */
   isPrivate?: boolean;
-  /** Combined date and time for shift start. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
-  startDateTime?: string;
 }
 
 export const ShiftsEntity = {
@@ -811,6 +811,8 @@ export type StaffAvailabilityEntityDayOfWeekEnum =
  * Stores each staff member's preferred working schedule by day of week. Each record represents one day's availability window. Used by facility managers when posting shifts to see which staff prefer to work at that time. Staff can still apply for shifts outside their stated availability.
  */
 export interface IStaffAvailabilityEntity {
+  /** Optional end date until which this availability preference is active. Null means no expiry.. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
+  effectiveTo?: string;
   /** Preferred shift start time in HH:MM 24-hour format (e.g. '07:00'). Represents the earliest time the staff member prefers to start.  */
   startTime?: string;
   /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
@@ -827,8 +829,6 @@ export interface IStaffAvailabilityEntity {
   isAvailable?: boolean;
   /** Optional free-text notes about availability for this day (e.g. 'prefer morning shifts only', 'available after 2pm').  */
   notes?: string;
-  /** Optional end date until which this availability preference is active. Null means no expiry.. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
-  effectiveTo?: string;
 }
 
 export const StaffAvailabilityEntity = {

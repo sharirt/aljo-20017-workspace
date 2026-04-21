@@ -31,7 +31,7 @@ export interface BulkShiftPreviewItem {
 
 export interface BulkShiftFormData {
   facilityProfileId: string;
-  requiredRole: "RN" | "LPN" | "CCA" | "CITR";
+  requiredRole: "RN" | "LPN" | "CCA" | "CITR" | "PCA";
   startDate: string; // YYYY-MM-DD
   endDate: string; // YYYY-MM-DD
   daysOfWeek: DayOfWeekValue[];

@@ -6,6 +6,7 @@ export const ELIGIBILITY_MATRIX: Record<string, string[]> = {
   LPN: ["LPN", "CCA", "CITR"],
   CCA: ["CCA", "CITR"],
   CITR: ["CITR"],
+  PCA: ["PCA"],
 };
 
 /** Check if a staff member with a given role can accept a shift requiring a specific role */
@@ -100,6 +101,7 @@ export function getRoleBadgeColor(role?: string): string {
   if (role === "LPN") return "bg-chart-2/20 text-chart-2";
   if (role === "CCA") return "bg-chart-3/20 text-chart-3";
   if (role === "CITR") return "bg-chart-4/20 text-chart-4";
+  if (role === "PCA") return "bg-chart-5/20 text-chart-5";
   return "bg-muted text-muted-foreground";
 }
 

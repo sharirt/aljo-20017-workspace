@@ -8,6 +8,7 @@ export const ROLE_FULL_NAMES: Record<string, string> = {
   LPN: "Licensed Practical Nurse",
   CCA: "Continuing Care Assistant",
   CITR: "Carer in Training",
+  PCA: "Personal Care Aide",
 };
 
 // --- Role Descriptions ---
@@ -16,11 +17,13 @@ export const ROLE_DESCRIPTIONS: Record<string, string> = {
   LPN: "Licensed Practical Nurses deliver direct patient care under the supervision of RNs, including medication administration and wound care.",
   CCA: "Continuing Care Assistants provide personal care and support to clients in home care, long-term care, and community settings.",
   CITR: "Carers in Training are developing foundational healthcare skills through supervised practical experience and training programs.",
+  PCA: "Personal Care Aides provide essential personal care and daily living assistance to clients in home care and community settings.",
 };
 
 // --- Role Upgrade Progression ---
 export const ROLE_UPGRADE_MAP: Record<string, string | null> = {
   CITR: "CCA",
+  PCA: "CCA",
   CCA: "LPN",
   LPN: "RN",
   RN: null,

@@ -78,7 +78,7 @@ export default function AdminHelp() {
             </p>
             <ul className="ml-2 list-inside list-disc space-y-1.5">
               <li>
-                <strong>All Roles (RN, LPN, CCA, CITR)</strong> — Government ID,
+                <strong>All Roles (RN, LPN, CCA, CITR, PCA)</strong> — Government ID,
                 Background Check, TB Test, COVID Vaccination
               </li>
               <li>
@@ -90,6 +90,9 @@ export default function AdminHelp() {
               </li>
               <li>
                 <strong>CITR</strong> — base documents only
+              </li>
+              <li>
+                <strong>PCA</strong> — base documents plus CPR/First Aid
               </li>
             </ul>
             <HelpInfoBox>

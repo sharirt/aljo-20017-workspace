@@ -155,7 +155,7 @@ export default function StaffHelp() {
               <li>
                 <strong>Role eligibility</strong> — RN can work RN/LPN/CCA/CITR
                 shifts; LPN can work LPN/CCA/CITR; CCA can work CCA/CITR; CITR
-                can only work CITR
+                can only work CITR; PCA can only work PCA
               </li>
               <li>
                 <strong>Facility orientation</strong> — if required by the
@@ -336,7 +336,7 @@ export default function StaffHelp() {
           <AccordionContent className="space-y-3 pb-4 text-sm leading-relaxed text-muted-foreground">
             <p>
               Apply for a <strong>role upgrade</strong> when you earn higher
-              qualifications (e.g., CITR → CCA → LPN → RN).
+              qualifications (e.g., CITR → CCA → LPN → RN, or PCA → CCA → LPN → RN).
             </p>
             <ul className="ml-2 list-inside list-disc space-y-1.5">
               <li>

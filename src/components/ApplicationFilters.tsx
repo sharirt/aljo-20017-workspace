@@ -78,6 +78,7 @@ export const ApplicationFilters = ({
                 <SelectItem value="LPN">LPN</SelectItem>
                 <SelectItem value="CCA">CCA</SelectItem>
                 <SelectItem value="CITR">CITR</SelectItem>
+                <SelectItem value="PCA">PCA</SelectItem>
               </SelectContent>
             </Select>
           </div>

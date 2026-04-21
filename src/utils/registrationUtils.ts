@@ -18,6 +18,7 @@ export const ROLE_TYPE_OPTIONS = [
   { value: "LPN", label: "LPN - Licensed Practical Nurse" },
   { value: "CCA", label: "CCA - Continuing Care Assistant" },
   { value: "CITR", label: "CITR - Care in Training" },
+  { value: "PCA", label: "PCA - Personal Care Aide" },
 ] as const;
 
 export const INITIAL_FORM_DATA: RegistrationFormData = {

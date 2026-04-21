@@ -121,6 +121,7 @@ export const WorkEligibilitySection = ({
             <SelectItem value="LPN">LPN — Licensed Practical Nurse</SelectItem>
             <SelectItem value="CCA">CCA — Continuing Care Assistant</SelectItem>
             <SelectItem value="CITR">CITR — Carer in Training</SelectItem>
+            <SelectItem value="PCA">PCA — Personal Care Aide</SelectItem>
           </SelectContent>
         </Select>
       </div>

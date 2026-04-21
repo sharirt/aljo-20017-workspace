@@ -15,6 +15,7 @@ export const REQUIRED_DOCS_BY_ROLE: Record<
   LPN: ["contractor_letter", "resume", "nursing_license", "cpr_certification", "liability_coverage", "police_check", "work_permit", "sin_copy", "covid_vaccination", "photo_id", "void_cheque"],
   CCA: ["contractor_letter", "resume", "cca_certificate", "cpr_certification", "police_check", "work_permit", "sin_copy", "covid_vaccination", "photo_id", "void_cheque"],
   CITR: ["contractor_letter", "resume", "police_check", "work_permit", "sin_copy", "covid_vaccination", "photo_id", "void_cheque"],
+  PCA: ["contractor_letter", "resume", "cpr_certification", "police_check", "work_permit", "sin_copy", "covid_vaccination", "photo_id", "void_cheque"],
 };
 
 export const DOCUMENT_TYPE_LABELS: Record<

@@ -15,6 +15,7 @@ const ROLE_ELIGIBILITY: Record<string, string[]> = {
   LPN: ["RN", "LPN"],
   CCA: ["RN", "LPN", "CCA"],
   CITR: ["RN", "LPN", "CCA", "CITR"],
+  PCA: ["PCA"],
 };
 
 /**
@@ -139,7 +140,7 @@ export const getEligibleFavorites = (
 export const buildAutoAssignInput = (
   shiftId: string,
   facilityId: string,
-  requiredRole: "RN" | "LPN" | "CCA" | "CITR",
+  requiredRole: "RN" | "LPN" | "CCA" | "CITR" | "PCA",
   headcount: number,
   startDateTime: string,
   endDateTime: string

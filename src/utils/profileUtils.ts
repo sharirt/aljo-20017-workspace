@@ -30,6 +30,7 @@ export const ROLE_TYPE_LABELS: Record<string, string> = {
   LPN: "LPN — Licensed Practical Nurse",
   CCA: "CCA — Continuing Care Assistant",
   CITR: "CITR — Carer in Training",
+  PCA: "PCA — Personal Care Aide",
 };
 
 // --- Compliance Status Config ---

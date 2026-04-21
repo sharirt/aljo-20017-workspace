@@ -41,6 +41,7 @@ const ROLE_OPTIONS = [
   { value: "LPN", label: "LPN" },
   { value: "CCA", label: "CCA" },
   { value: "CITR", label: "CITR" },
+  { value: "PCA", label: "PCA" },
 ];
 
 export const AdminShiftFilters = ({

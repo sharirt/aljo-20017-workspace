@@ -11,6 +11,7 @@ export const ELIGIBILITY_MATRIX: Record<string, string[]> = {
   LPN: ["LPN", "CCA", "CITR"],
   CCA: ["CCA", "CITR"],
   CITR: ["CITR"],
+  PCA: ["PCA"],
 };
 
 /**

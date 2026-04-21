@@ -5,6 +5,7 @@ export const ROLE_BADGE_COLORS: Record<string, string> = {
   LPN: "bg-chart-2/20 text-chart-2",
   CCA: "bg-chart-3/20 text-chart-3",
   CITR: "bg-chart-4/20 text-chart-4",
+  PCA: "bg-chart-5/20 text-chart-5",
 };
 
 export const COMPLIANCE_BADGE_COLORS: Record<string, { className: string; label: string }> = {

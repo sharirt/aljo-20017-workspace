@@ -59,7 +59,7 @@ export default function FacilityManagerHelp() {
           <AccordionContent className="space-y-3 pb-4 text-sm leading-relaxed text-muted-foreground">
             <p>
               Click the <strong>"Post New Shift"</strong> button to create a
-              shift. Select the required role (RN, LPN, CCA, or CITR), date,
+              shift. Select the required role (RN, LPN, CCA, CITR, or PCA), date,
               start/end time, and headcount (1–20 staff).
             </p>
             <p>
@@ -266,7 +266,7 @@ export default function FacilityManagerHelp() {
             <ul className="ml-2 list-inside list-disc space-y-1.5">
               <li>
                 <strong>Post for CITR</strong> — all roles can apply (RN, LPN,
-                CCA, CITR) — widest pool
+                CCA, CITR) — widest pool in the nursing track
               </li>
               <li>
                 <strong>Post for CCA</strong> — CCA, LPN, and RN can apply
@@ -280,9 +280,9 @@ export default function FacilityManagerHelp() {
               </li>
             </ul>
             <HelpInfoBox>
-              Posting for CITR gives you the widest candidate pool, while posting for RN
-              ensures you get the most qualified staff. Choose based on the care level
-              required.
+              Posting for CITR gives you the widest candidate pool in the nursing track, while posting for RN
+              ensures you get the most qualified staff. PCA is a separate track for personal care aides.
+              Choose based on the care level required.
             </HelpInfoBox>
           </AccordionContent>
         </AccordionItem>

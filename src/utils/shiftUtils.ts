@@ -59,6 +59,7 @@ export const getRoleBadgeColor = (role?: string): string => {
     case "LPN": return "bg-chart-2/20 text-chart-2";
     case "CCA": return "bg-chart-3/20 text-chart-3";
     case "CITR": return "bg-chart-4/20 text-chart-4";
+    case "PCA": return "bg-chart-5/20 text-chart-5";
     default: return "bg-muted text-muted-foreground";
   }
 };
