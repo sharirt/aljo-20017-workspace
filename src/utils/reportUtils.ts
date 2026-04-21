@@ -1,4 +1,4 @@
-import { format, parseISO, startOfWeek, endOfWeek, subWeeks, startOfMonth, endOfMonth, subMonths, addDays, isWithinInterval, differenceInDays } from "date-fns";
+import { format, parseISO, startOfWeek, endOfWeek, subWeeks, startOfMonth, endOfMonth, subMonths, addDays, isWithinInterval, differenceInDays, differenceInCalendarDays } from "date-fns";
 
 // ─── Date Range Presets ─────────────────────────────────────────────────────
 
@@ -9,23 +9,19 @@ export interface DateRange {
   end: Date;
 }
 
-/** Bi-weekly pay period anchor: Monday, January 6, 2025 */
-const PAY_PERIOD_ANCHOR = new Date(2025, 0, 6);
+/** Bi-weekly pay period anchor: Monday, April 13, 2026 */
+const PAY_PERIOD_ANCHOR = new Date(2026, 3, 13);
 
 /**
  * Get the current pay period (bi-weekly starting from a Monday).
- * Anchored to January 6, 2025. Every 14 days from that anchor is a new pay period.
+ * Anchored to April 13, 2026. Every 14 days from that anchor is a new pay period.
  */
 export function getCurrentPayPeriod(): DateRange {
   const now = new Date();
-  // Get the most recent Monday (or today if Monday)
-  const thisMonday = startOfWeek(now, { weekStartsOn: 1 });
-  // Count weeks since anchor
-  const diffMs = thisMonday.getTime() - PAY_PERIOD_ANCHOR.getTime();
-  const diffWeeks = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
-  // If diffWeeks is even → current period starts at thisMonday; if odd → started last Monday
-  const periodStart = diffWeeks % 2 === 0 ? thisMonday : subWeeks(thisMonday, 1);
-  const periodEnd = addDays(periodStart, 13); // 14-day period
+  const daysElapsed = differenceInCalendarDays(now, PAY_PERIOD_ANCHOR);
+  const currentIndex = daysElapsed >= 0 ? Math.floor(daysElapsed / 14) : 0;
+  const periodStart = addDays(PAY_PERIOD_ANCHOR, currentIndex * 14);
+  const periodEnd = addDays(periodStart, 13);
   periodEnd.setHours(23, 59, 59, 999);
 
   return { start: periodStart, end: periodEnd };
@@ -39,12 +35,11 @@ export function getPayPeriodLabel(range: DateRange): string {
 }
 
 /**
- * Returns the sequential pay period number (1-indexed) since the anchor date (Jan 6, 2025).
+ * Returns the sequential pay period number (1-indexed) since the anchor date (Apr 13, 2026).
  */
 export function getPayPeriodNumber(range: DateRange): number {
-  const diffMs = range.start.getTime() - PAY_PERIOD_ANCHOR.getTime();
-  const diffDays = Math.round(diffMs / (24 * 60 * 60 * 1000));
-  const periodIndex = Math.floor(diffDays / 14);
+  const diffDays = differenceInCalendarDays(range.start, PAY_PERIOD_ANCHOR);
+  const periodIndex = diffDays >= 0 ? Math.floor(diffDays / 14) : 0;
   return periodIndex + 1; // 1-indexed
 }
 

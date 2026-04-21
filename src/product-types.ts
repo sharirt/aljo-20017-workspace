@@ -221,8 +221,6 @@ export type FacilitiesEntityStatusEnum = "active" | "inactive";
  * Stores facility information including contact details, type, and address. Referenced by facility managers and shift listings.
  */
 export interface IFacilitiesEntity {
-  /** Postal code for the facility address  */
-  postalCode?: string;
   /** Geofencing enforcement mode: strict blocks clock-in outside radius, flag allows but records exception  */
   geofenceMode?: FacilitiesEntityGeofenceModeEnum;
   /** Primary contact person name at the facility  */
@@ -249,6 +247,8 @@ export interface IFacilitiesEntity {
   province?: string;
   /** Geofence radius in meters for clock-in verification, default 200 meters  */
   geofenceRadius?: number;
+  /** Postal code for the facility address  */
+  postalCode?: string;
 }
 
 export const FacilitiesEntity = {
