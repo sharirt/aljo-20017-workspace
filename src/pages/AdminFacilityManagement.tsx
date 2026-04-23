@@ -42,6 +42,7 @@ import { FMCountBadge } from "@/components/FMCountBadge";
 import { getFMCountForFacility } from "@/utils/fmUtils";
 import { cn } from "@/lib/utils";
 import { FacilityDocumentsTab } from "@/components/FacilityDocumentsTab";
+import { FacilityAgreementSection } from "@/components/FacilityAgreementSection";
 
 export const pageIcon = "building-2";
 
@@ -925,6 +926,12 @@ export default function AdminFacilityManagementPage() {
               </TabsContent>
             )}
           </Tabs>
+
+          {/* Facility Agreement Section */}
+          <FacilityAgreementSection
+            facilityId={selectedFacility.id}
+            facilityName={selectedFacility.name || ""}
+          />
         </div>
       )}
 

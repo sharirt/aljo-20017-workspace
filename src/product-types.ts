@@ -4,10 +4,10 @@
 export interface IAdminProfilesEntity {
   /** Admin's phone number in E.164 format (e.g. +12025551234). Used for SMS notifications when a direct message is sent to this admin.  */
   phone?: string;
-  /** The admin user's email address. Used as the foreign key linking to UsersEntity.  */
-  email?: string;
   /** Admin's display name shown in the platform UI.  */
   displayName?: string;
+  /** The admin user's email address. Used as the foreign key linking to UsersEntity.  */
+  email?: string;
 }
 
 export const AdminProfilesEntity = {
@@ -21,10 +21,10 @@ export const AdminProfilesEntity = {
 export interface IAppSettingsEntity {
   /** Human-readable description of what this setting controls  */
   description?: string;
-  /** Boolean value of the setting. For geotrackingEnabled: true means GPS clock-in validation is active, false means it is disabled and staff can clock in without location check.  */
-  settingValue?: boolean;
   /** Unique key identifying the setting, e.g. 'geotrackingEnabled'  */
   settingKey?: string;
+  /** Boolean value of the setting. For geotrackingEnabled: true means GPS clock-in validation is active, false means it is disabled and staff can clock in without location check.  */
+  settingValue?: boolean;
   /** Email of the admin who last changed this setting  */
   updatedByEmail?: string;
 }
@@ -40,18 +40,18 @@ export type BillingRatesEntityRoleTypeEnum = "RN" | "LPN" | "CCA" | "CITR";
  * Stores facility billing rates with multipliers for short notice, holidays, and overtime. Each row represents a unique facility-role combination. The billingRate is highly confidential and should only be visible to admin role. The difference between billingRate and staffRate represents ALJO's margin.
  */
 export interface IBillingRatesEntity {
-  /** Hourly rate billed to facility in CAD. CONFIDENTIAL: visible to admin only, never to staff or facilities. This is what the facility pays ALJO. The difference between billingRate and staffRate is ALJO's margin.  */
-  billingRate?: number;
   /** Reference to Facilities table id  */
   facilityProfileId?: string;
-  /** Rate multiplier applied for statutory holidays. Default 1.5 (time and a half). Applied to billing rates.  */
-  holidayMultiplier?: number;
-  /** Healthcare role type for this rate configuration (RN, LPN, CCA, CITR)  */
-  roleType?: BillingRatesEntityRoleTypeEnum;
   /** Rate multiplier applied for overtime hours (typically over 8 hours/day or 40 hours/week). Default 1.5 (time and a half). Applied to billing rates.  */
   overtimeMultiplier?: number;
   /** Rate multiplier applied when shifts are posted less than 24 hours ahead. Default 1.0 (no premium). Example: 1.25 = 25% premium for short notice shifts.  */
   shortNoticeMultiplier?: number;
+  /** Hourly rate billed to facility in CAD. CONFIDENTIAL: visible to admin only, never to staff or facilities. This is what the facility pays ALJO. The difference between billingRate and staffRate is ALJO's margin.  */
+  billingRate?: number;
+  /** Rate multiplier applied for statutory holidays. Default 1.5 (time and a half). Applied to billing rates.  */
+  holidayMultiplier?: number;
+  /** Healthcare role type for this rate configuration (RN, LPN, CCA, CITR)  */
+  roleType?: BillingRatesEntityRoleTypeEnum;
 }
 
 export const BillingRatesEntity = {
@@ -63,10 +63,10 @@ export const BillingRatesEntity = {
  * Stores date ranges that staff members have manually blocked to indicate unavailability. Used by the availability matching system to exclude staff from shift suggestions when they have blocked the shift date. Each record represents a contiguous blocked period with an optional reason.
  */
 export interface IBlockedDatesEntity {
-  /** Last date of the blocked range (inclusive), stored as a date value in YYYY-MM-DD format. Equal to startDate for single-day blocks.. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
-  endDate?: string;
   /** Optional free-text reason for blocking these dates (e.g. 'Vacation', 'Medical appointment', 'Family commitment'). Nullable.  */
   reason?: string;
+  /** Last date of the blocked range (inclusive), stored as a date value in YYYY-MM-DD format. Equal to startDate for single-day blocks.. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
+  endDate?: string;
   /** First date of the blocked range (inclusive), stored as a date value in YYYY-MM-DD format. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
   startDate?: string;
   /** Email of the staff member who created this blocked date range — used for quick lookups without joining StaffProfiles  */
@@ -86,18 +86,10 @@ export type BonusesEntityStatusEnum = "pending" | "paid";
  * Stores bonus payment records awarded by admins to staff members. Each record represents a one-time bonus tied to a staff profile and optionally a pay period. Bonuses are included in payroll calculations when generating timesheets for the relevant period.
  */
 export interface IBonusesEntity {
-  /** Bonus amount in CAD dollars. Must be a positive number.  */
-  amount?: number;
-  /** Email of the admin who awarded the bonus  */
-  awardedByEmail?: string;
-  /** Email of the staff member receiving the bonus, for display and notification purposes  */
-  staffEmail?: string;
   /** The end date of the pay period this bonus should be included in (YYYY-MM-DD). Set at award time to the current pay period end.. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
   payPeriodEnd?: string;
   /** Status of the bonus: 'pending' (not yet included in payroll), 'paid' (included in a generated payroll run)  */
   status?: BonusesEntityStatusEnum;
-  /** Timestamp when the bonus was awarded. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
-  awardedAt?: string;
   /** Foreign key referencing StaffProfiles.id — the staff member receiving the bonus  */
   staffProfileId?: string;
   /** Admin-provided reason or note for the bonus (e.g. 'Holiday bonus', 'Exceptional performance')  */
@@ -106,6 +98,14 @@ export interface IBonusesEntity {
   payPeriodStart?: string;
   /** Optional reference to the timesheets record this bonus was included in, set when payroll is generated  */
   timesheetId?: string;
+  /** Bonus amount in CAD dollars. Must be a positive number.  */
+  amount?: number;
+  /** Email of the admin who awarded the bonus  */
+  awardedByEmail?: string;
+  /** Email of the staff member receiving the bonus, for display and notification purposes  */
+  staffEmail?: string;
+  /** Timestamp when the bonus was awarded. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  awardedAt?: string;
 }
 
 export const BonusesEntity = {
@@ -145,6 +145,10 @@ export interface IContractTemplatesEntityFieldsObject {
   items?: IContractTemplatesEntityContractTemplatesEntityItemsItemObject[];
 }
 
+export type ContractTemplatesEntityTemplateTypeEnum =
+  | "staff_contract"
+  | "facility_agreement";
+
 /**
  * Each record represents a contract template uploaded by an admin. Stores the DocuSeal template ID returned after upload, the original PDF URL, and the JSON array of field placement objects (x, y, w, h, page, type, role) configured by the admin via the in-app PDF viewer. Only active templates are sent to new staff during onboarding.
  */
@@ -157,14 +161,16 @@ export interface IContractTemplatesEntity {
   fileUrl?: string;
   /** Admin notes or description of what this contract covers  */
   description?: string;
-  /** Email of the admin who uploaded this template  */
-  uploadedByEmail?: string;
-  /** Whether this template is currently active and will be sent to new staff during onboarding. Only active templates are included in signature request batches.  */
-  isActive?: boolean;
   /** The DocuSeal signing role name used in this template (e.g. 'Staff', 'First Party'). Must match the role defined in the template fields.  */
   roleName?: string;
   /** JSON array of field placement objects configured by admin via the in-app PDF viewer. Each object contains: id, x, y, w, h (normalized 0-1 coordinates), page (1-based), type (signature/date/text/initials), role, condition.  */
   fields?: IContractTemplatesEntityFieldsObject;
+  /** Distinguishes whether this template is used for staff onboarding contracts or facility-level agreements. staff_contract = sent to staff during onboarding. facility_agreement = sent to facility managers for facility-level signing. Defaults to staff_contract for backward compatibility.  */
+  templateType?: ContractTemplatesEntityTemplateTypeEnum;
+  /** Email of the admin who uploaded this template  */
+  uploadedByEmail?: string;
+  /** Whether this template is currently active and will be sent to new staff during onboarding. Only active templates are included in signature request batches.  */
+  isActive?: boolean;
 }
 
 export const ContractTemplatesEntity = {
@@ -192,16 +198,16 @@ export interface IEarlyPayRequestsEntity {
   denialReason?: string;
   /** Current status of the early pay request: pending=awaiting review, approved=admin approved, denied=admin denied, paid=included in payroll  */
   status?: EarlyPayRequestsEntityStatusEnum;
-  /** Timestamp when the early pay was included in payroll generation. Only populated when status=paid.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
-  paidAt?: string;
-  /** The dollar amount the staff member is requesting as an early pay advance  */
-  amountRequested?: number;
   /** Timestamp when the admin reviewed the request. Null until reviewed.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   reviewedAt?: string;
   /** Email of the admin who reviewed (approved or denied) the request. Null until reviewed.  */
   reviewedByEmail?: string;
   /** Foreign key reference to StaffProfiles.id — the staff member making the request  */
   staffProfileId?: string;
+  /** Timestamp when the early pay was included in payroll generation. Only populated when status=paid.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  paidAt?: string;
+  /** The dollar amount the staff member is requesting as an early pay advance  */
+  amountRequested?: number;
   /** Timestamp when the staff member submitted the request. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   requestedAt?: string;
   /** The dollar amount approved by admin (may differ from requested). Null until reviewed.  */
@@ -221,28 +227,28 @@ export type FacilitiesEntityStatusEnum = "active" | "inactive";
  * Stores facility information including contact details, type, and address. Referenced by facility managers and shift listings.
  */
 export interface IFacilitiesEntity {
-  /** Postal code for the facility address  */
-  postalCode?: string;
   /** Geofencing enforcement mode: strict blocks clock-in outside radius, flag allows but records exception  */
   geofenceMode?: FacilitiesEntityGeofenceModeEnum;
-  /** Primary contact person name at the facility  */
-  contactName?: string;
   /** Facility operational status  */
   status?: FacilitiesEntityStatusEnum;
-  /** City where facility is located  */
-  city?: string;
-  /** GPS longitude coordinate for geofencing and location-based clock-in verification  */
-  longitude?: number;
   /** Full street address of the facility  */
   address?: string;
   /** Primary contact phone number  */
   contactPhone?: string;
-  /** Facility name (e.g., 'St. Mary's Hospital', 'Sunrise Senior Care')  */
-  name?: string;
   /** Primary contact email address  */
   contactEmail?: string;
   /** GPS latitude coordinate for geofencing and location-based clock-in verification  */
   latitude?: number;
+  /** Postal code for the facility address  */
+  postalCode?: string;
+  /** Primary contact person name at the facility  */
+  contactName?: string;
+  /** City where facility is located  */
+  city?: string;
+  /** GPS longitude coordinate for geofencing and location-based clock-in verification  */
+  longitude?: number;
+  /** Facility name (e.g., 'St. Mary's Hospital', 'Sunrise Senior Care')  */
+  name?: string;
   /** Internal administrative notes about the facility  */
   notes?: string;
   /** Province where facility is located  */
@@ -256,6 +262,55 @@ export const FacilitiesEntity = {
   instanceType: {} as IFacilitiesEntity,
 } as const;
 
+export type FacilityAgreementsEntityStatusEnum =
+  | "pending_fm_signature"
+  | "pending_admin_signature"
+  | "signed"
+  | "expired";
+
+/**
+ * Stores the lifecycle of a facility agreement signing process. Each record is unique per facility and represents the current active agreement. When an agreement expires, a new record is created for re-signing. Links to ContractTemplates for the template used, FacilityManagerProfiles for the FM signer, and Facilities for the facility. The docusealSubmissionId is used to match incoming E-Signature Event webhooks. Two signers: FM first, then admin countersigns.
+ */
+export interface IFacilityAgreementsEntity {
+  /** Email of the admin who triggered sending this agreement  */
+  sentByEmail?: string;
+  /** FK to ContractTemplates.id — the facility agreement template used  */
+  contractTemplateId?: string;
+  /** Timestamp when the admin completed countersigning. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  adminSignedAt?: string;
+  /** Expiry date of the signed agreement, set to 1 year after adminSignedAt. When today passes this date, the agreement is flipped to expired and the FM must re-sign.. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
+  expiresAt?: string;
+  /** The DocuSeal signing URL for the admin countersignature. Shown in AdminFacilityManagement after FM has signed.  */
+  adminSigningUrl?: string;
+  /** FK to Facilities.id — the facility this agreement belongs to  */
+  facilityProfileId?: string;
+  /** DocuSeal submission ID returned by Submit Prefilled Templates. Used to match incoming E-Signature Event webhook callbacks for both FM and admin signing events.  */
+  docusealSubmissionId?: number;
+  /** Denormalized template name at the time of sending, for display purposes  */
+  contractTemplateName?: string;
+  /** Current status of the facility agreement. pending_fm_signature=sent to FM but not yet signed, pending_admin_signature=FM signed, waiting for admin countersignature, signed=both parties signed, expired=agreement passed its 1-year expiry date  */
+  status?: FacilityAgreementsEntityStatusEnum;
+  /** Full name of the facility manager at the time of sending, denormalized for display  */
+  facilityManagerName?: string;
+  /** Internal URL of the final fully-signed PDF document. Populated after both parties have signed and the document is uploaded to internal storage.  */
+  signedDocumentUrl?: string;
+  /** Denormalized facility name at the time of sending, for display purposes  */
+  facilityName?: string;
+  /** The DocuSeal signing URL for the facility manager. Shown on the FM gate page so they can sign directly.  */
+  fmSigningUrl?: string;
+  /** Timestamp when the facility manager completed signing. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  fmSignedAt?: string;
+  /** Timestamp when the agreement was first sent to the facility manager. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  sentAt?: string;
+  /** Email of the facility manager who needs to sign (first FM assigned to the facility)  */
+  facilityManagerEmail?: string;
+}
+
+export const FacilityAgreementsEntity = {
+  tableBlockId: "69e9d84596b75e10edcee5e2",
+  instanceType: {} as IFacilityAgreementsEntity,
+} as const;
+
 export type FacilityDocumentsEntityDocumentTypeEnum =
   | "contract"
   | "insurance"
@@ -267,24 +322,24 @@ export type FacilityDocumentsEntityDocumentTypeEnum =
  * Each record represents a document uploaded for a specific facility. Linked to Facilities via facilityId. Stores file metadata including S3 URL, document type, expiry date, and uploader email. Used exclusively by admin users to manage facility compliance and contractual documentation.
  */
 export interface IFacilityDocumentsEntity {
-  /** Original file name as uploaded by the admin, e.g. 'contract_2026.pdf'.  */
-  fileName?: string;
   /** S3 URL where the uploaded file is stored. Used to retrieve and display the document.  */
   fileUrl?: string;
-  /** Timestamp when the document was uploaded to the system.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
-  uploadedAt?: string;
-  /** Foreign key reference to the Facilities table. Identifies which facility this document belongs to.  */
-  facilityId?: string;
   /** Human-readable name for the document, e.g. 'Service Agreement 2026' or 'Liability Insurance Certificate'.  */
   documentName?: string;
   /** Email of the admin user who uploaded the document. References the authenticated user's email.  */
   uploadedByEmail?: string;
+  /** Optional free-text notes about the document, e.g. renewal reminders or special conditions.  */
+  notes?: string;
+  /** Original file name as uploaded by the admin, e.g. 'contract_2026.pdf'.  */
+  fileName?: string;
+  /** Timestamp when the document was uploaded to the system.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  uploadedAt?: string;
+  /** Foreign key reference to the Facilities table. Identifies which facility this document belongs to.  */
+  facilityId?: string;
   /** Optional expiry date for the document. Used to flag documents that are expiring soon or have already expired. Null if the document does not expire.. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
   expiryDate?: string;
   /** Category of the document.  */
   documentType?: FacilityDocumentsEntityDocumentTypeEnum;
-  /** Optional free-text notes about the document, e.g. renewal reminders or special conditions.  */
-  notes?: string;
 }
 
 export const FacilityDocumentsEntity = {
@@ -300,16 +355,16 @@ export type FacilityFavoritesEntityPriorityEnum = "preferred" | "regular";
 export interface IFacilityFavoritesEntity {
   /** Email of the facility manager or admin who added this staff member to favorites  */
   addedByEmail?: string;
-  /** Timestamp when the staff member was added to favorites. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
-  addedAt?: string;
   /** Optional notes about why this staff member is a favorite (e.g. 'Great with dementia patients')  */
   notes?: string;
+  /** Priority level for this favorite: preferred (top tier, gets earliest notifications) or regular (standard favorite)  */
+  priority?: FacilityFavoritesEntityPriorityEnum;
+  /** Timestamp when the staff member was added to favorites. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  addedAt?: string;
   /** Foreign key reference to Facilities.id — the facility that favorited this staff member  */
   facilityId?: string;
   /** Foreign key reference to StaffProfiles.id — the staff member being favorited  */
   staffProfileId?: string;
-  /** Priority level for this favorite: preferred (top tier, gets earliest notifications) or regular (standard favorite)  */
-  priority?: FacilityFavoritesEntityPriorityEnum;
 }
 
 export const FacilityFavoritesEntity = {
@@ -326,10 +381,14 @@ export type FacilityManagerProfilesEntityAutoScheduleModeEnum =
  * Stores facility manager specific data linked to Users entity via email. Each manager is associated with one facility.
  */
 export interface IFacilityManagerProfilesEntity {
-  /** Number of minutes that favorite staff get exclusive access to a new shift before it opens to all eligible staff. Default 120 (2 hours). Only applies when autoScheduleMode = favorites_first.  */
-  favoritesHeadStartMinutes?: number;
   /** Timestamp of when the facility manager last opened the Messages inbox. Used to calculate the unread message count badge in the navigation.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   lastViewedMessagesDate?: string;
+  /** Job title (e.g., 'Director of Nursing', 'HR Manager')  */
+  title?: string;
+  /** Reference to Facilities table id  */
+  facilityProfileId?: string;
+  /** Number of minutes that favorite staff get exclusive access to a new shift before it opens to all eligible staff. Default 120 (2 hours). Only applies when autoScheduleMode = favorites_first.  */
+  favoritesHeadStartMinutes?: number;
   /** Direct contact phone number  */
   phone?: string;
   /** Email address linking to Users entity  */
@@ -340,10 +399,6 @@ export interface IFacilityManagerProfilesEntity {
   lastViewedNotificationsDate?: string;
   /** Auto-schedule mode: favorites_only = only assign from favorites and leave remaining open, favorites_first = favorites get a head start window then opens to all, open_to_all = no auto-assignment, open to all eligible staff immediately.  */
   autoScheduleMode?: FacilityManagerProfilesEntityAutoScheduleModeEnum;
-  /** Job title (e.g., 'Director of Nursing', 'HR Manager')  */
-  title?: string;
-  /** Reference to Facilities table id  */
-  facilityProfileId?: string;
 }
 
 export const FacilityManagerProfilesEntity = {
@@ -355,6 +410,8 @@ export const FacilityManagerProfilesEntity = {
  * Stores statutory holidays by date and province. Used by payroll and invoice generation to determine if a shift falls on a holiday and apply the appropriate multiplier. Each row represents a single holiday occurrence for a specific year and province.
  */
 export interface IHolidaysEntity {
+  /** Pay/billing multiplier applied when a shift falls on this holiday. Default is 1.5 (time and a half). Can be overridden per holiday if needed.  */
+  multiplier?: number;
   /** The calendar year of the holiday. Useful for filtering holidays by year.  */
   year?: number;
   /** The Canadian province this holiday applies to. Default is 'Nova Scotia'. Allows future multi-province support.  */
@@ -363,14 +420,18 @@ export interface IHolidaysEntity {
   date?: string;
   /** Full name of the statutory holiday (e.g., 'Christmas Day', 'Labour Day')  */
   name?: string;
-  /** Pay/billing multiplier applied when a shift falls on this holiday. Default is 1.5 (time and a half). Can be overridden per holiday if needed.  */
-  multiplier?: number;
 }
 
 export const HolidaysEntity = {
   tableBlockId: "69c5194c792a18ec318931fe",
   instanceType: {} as IHolidaysEntity,
 } as const;
+
+export type InvoicesEntityInvoiceStatusEnum =
+  | "draft"
+  | "sent"
+  | "paid"
+  | "overdue";
 
 /**
  * undefined
@@ -390,16 +451,18 @@ export interface IInvoicesEntityInvoicesEntityLineItemsItemObject {
   lineTotal: number;
 }
 
-export type InvoicesEntityInvoiceStatusEnum =
-  | "draft"
-  | "sent"
-  | "paid"
-  | "overdue";
-
 /**
  * Stores billing invoices for facilities with period tracking, line items for shifts worked, HST calculations, payment status, and due dates. Each invoice represents a billing period for a specific facility with detailed shift-level line items.
  */
 export interface IInvoicesEntity {
+  /** Sum of all line items before tax (calculated from lineItems)  */
+  subtotal?: number;
+  /** Auto-generated unique invoice number for tracking and reference  */
+  invoiceNumber?: string;
+  /** Current status of the invoice in the billing lifecycle. draft=generated but not sent, sent=emailed to facility, paid=payment received, overdue=past due date without payment.  */
+  invoiceStatus?: InvoicesEntityInvoiceStatusEnum;
+  /** Calculated HST amount (subtotal × hstRate / 100)  */
+  hstAmount?: number;
   /** Timestamp when the invoice was sent to the facility. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   sentAt?: string;
   /** End date of the billing period covered by this invoice. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
@@ -412,20 +475,12 @@ export interface IInvoicesEntity {
   hstRate?: number;
   /** Start date of the billing period covered by this invoice. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
   periodStart?: string;
-  /** Sum of all line items before tax (calculated from lineItems)  */
-  subtotal?: number;
   /** Timestamp when payment was received from the facility. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   paidAt?: string;
-  /** Auto-generated unique invoice number for tracking and reference  */
-  invoiceNumber?: string;
   /** Final invoice total including tax (subtotal + hstAmount)  */
   total?: number;
   /** Reference to Facilities table id  */
   facilityProfileId?: string;
-  /** Current status of the invoice in the billing lifecycle. draft=generated but not sent, sent=emailed to facility, paid=payment received, overdue=past due date without payment.  */
-  invoiceStatus?: InvoicesEntityInvoiceStatusEnum;
-  /** Calculated HST amount (subtotal × hstRate / 100)  */
-  hstAmount?: number;
 }
 
 export const InvoicesEntity = {
@@ -449,22 +504,22 @@ export interface IMessagesEntity {
   parentMessageId?: string;
   /** Scope of the message: direct=1-on-1, team=all staff, facility=all staff at a facility, shift=shift-specific thread.  */
   recipientType?: MessagesEntityRecipientTypeEnum;
-  /** Display name of the sender at time of sending.  */
-  senderName?: string;
   /** Email of the user who sent the message. Required.  */
   senderEmail?: string;
-  /** Reference to Facilities table id. Used for facility-scoped broadcast messages.  */
-  facilityId?: string;
   /** Email of the recipient for direct messages. Null for broadcast/group messages.  */
   recipientEmail?: string;
   /** Whether the recipient has read this message. Used for direct messages to track unread status.  */
   isRead?: boolean;
   /** The full text content of the message. Required.  */
   messageBody?: string;
-  /** Reference to Shifts table id. Used for shift-specific message threads.  */
-  shiftId?: string;
   /** Timestamp when the message was sent. Defaults to current datetime.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   sentAt?: string;
+  /** Display name of the sender at time of sending.  */
+  senderName?: string;
+  /** Reference to Facilities table id. Used for facility-scoped broadcast messages.  */
+  facilityId?: string;
+  /** Reference to Shifts table id. Used for shift-specific message threads.  */
+  shiftId?: string;
 }
 
 export const MessagesEntity = {
@@ -488,20 +543,20 @@ export type NotificationsEntityNotificationTypeEnum =
  * Stores notifications for all users (staff, facility managers, admins). Each row is a notification for a specific recipient identified by email. The createdAt auto-field is used as the notification timestamp. Unread state is tracked via lastViewedNotificationsDate on the user extension entity, not per-row. Supports deep linking via linkUrl.
  */
 export interface INotificationsEntity {
-  /** Optional type of the related entity (shift, application, document, role_upgrade, etc.) for context.  */
-  relatedEntityType?: string;
   /** Short notification headline shown in bold in the notification list.  */
   title?: string;
   /** Category of notification for icon/color styling. One of: shift_reminder, application_update, document_review, withdrawal, no_show, message, role_upgrade, onboarding, shift_trade, broadcast  */
   notificationType?: NotificationsEntityNotificationTypeEnum;
+  /** Optional deep link URL to navigate to when the notification is clicked (e.g. /staff-my-shifts, /admin-applications).  */
+  linkUrl?: string;
+  /** Optional type of the related entity (shift, application, document, role_upgrade, etc.) for context.  */
+  relatedEntityType?: string;
   /** Notification body/detail text. Truncated to 2 lines in the dropdown panel.  */
   body?: string;
   /** Optional ID of the related entity (shift ID, application ID, document ID, etc.) for context.  */
   relatedEntityId?: string;
   /** Email of the user who should receive this notification. Used to filter notifications per user.  */
   recipientEmail?: string;
-  /** Optional deep link URL to navigate to when the notification is clicked (e.g. /staff-my-shifts, /admin-applications).  */
-  linkUrl?: string;
 }
 
 export const NotificationsEntity = {
@@ -520,26 +575,26 @@ export type OrientationsEntityStatusEnum =
  * Stores orientation records linking staff members to facilities. Each record represents a staff member's orientation status at a specific facility. Used by checkEligibility to gate shift applications when requiresOrientation=true on a shift.
  */
 export interface IOrientationsEntity {
-  /** Foreign key reference to Facilities.id — the facility where orientation took place  */
-  facilityId?: string;
   /** Datetime when the orientation was completed. Null if not yet completed.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   completedAt?: string;
   /** Reference to the Shifts record created for the orientation session (isPrivate=true). Used to auto-complete orientation when the shift is clocked out.  */
   orientationShiftId?: string;
-  /** Timestamp when the staff member requested orientation at this facility. Set when status transitions to 'requested'.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
-  requestedAt?: string;
-  /** Foreign key reference to StaffProfiles.id — the staff member who was oriented  */
-  staffProfileId?: string;
   /** Optional notes about the orientation session, special instructions, or areas covered  */
   notes?: string;
   /** Current status of the orientation record  */
   status?: OrientationsEntityStatusEnum;
   /** Timestamp when the orientation request was denied by the facility manager.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   deniedAt?: string;
-  /** Name or email of the person who conducted the orientation (e.g. charge nurse, facility manager)  */
-  orientedBy?: string;
   /** Reason provided by the facility manager when denying an orientation request.  */
   denialReason?: string;
+  /** Foreign key reference to Facilities.id — the facility where orientation took place  */
+  facilityId?: string;
+  /** Timestamp when the staff member requested orientation at this facility. Set when status transitions to 'requested'.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  requestedAt?: string;
+  /** Foreign key reference to StaffProfiles.id — the staff member who was oriented  */
+  staffProfileId?: string;
+  /** Name or email of the person who conducted the orientation (e.g. charge nurse, facility manager)  */
+  orientedBy?: string;
 }
 
 export const OrientationsEntity = {
@@ -561,10 +616,10 @@ export interface IRoleTypesEntityClaimableRolesObject {
 export interface IRoleTypesEntity {
   /** Full display name of the role type (e.g., Registered Nurse, Licensed Practical Nurse).  */
   name?: string;
-  /** Whether this role type is currently active and available for use in shift postings and staff profiles. Defaults to true.  */
-  isActive?: boolean;
   /** Detailed description of the role's responsibilities, qualifications, and scope of practice within the ALJO CareCrew platform.  */
   description?: string;
+  /** Whether this role type is currently active and available for use in shift postings and staff profiles. Defaults to true.  */
+  isActive?: boolean;
   /** Array of role codes that this role type is allowed to claim shifts for. E.g., RN can claim ['RN','LPN','CCA','CITR']. Used to display claim eligibility rules on the Admin Settings page and enforce shift eligibility.  */
   claimableRoles?: IRoleTypesEntityClaimableRolesObject;
   /** Short role code used as enum value across the platform (e.g., RN, LPN, CCA, CITR). Must be unique and uppercase.  */
@@ -576,17 +631,17 @@ export const RoleTypesEntity = {
   instanceType: {} as IRoleTypesEntity,
 } as const;
 
-export type RoleUpgradeApplicationsEntityStatusEnum =
-  | "pending"
-  | "under_review"
-  | "approved"
-  | "rejected";
-
 export type RoleUpgradeApplicationsEntityRequestedRoleEnum =
   | "RN"
   | "LPN"
   | "CCA"
   | "CITR";
+
+export type RoleUpgradeApplicationsEntityStatusEnum =
+  | "pending"
+  | "under_review"
+  | "approved"
+  | "rejected";
 
 /**
  * Stores role upgrade requests from staff members. Each record represents a single application from a staff member to advance to a higher clinical role. Linked to StaffProfiles via staffProfileId. Admins review and approve/reject applications, which triggers a role update in StaffProfiles.
@@ -594,6 +649,10 @@ export type RoleUpgradeApplicationsEntityRequestedRoleEnum =
 export interface IRoleUpgradeApplicationsEntity {
   /** Optional internal notes added by admin during review. Not visible to staff.  */
   notes?: string;
+  /** Timestamp when the application was reviewed (approved or rejected) by an admin. Null until reviewed.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  reviewedAt?: string;
+  /** The clinical role the staff member is applying to upgrade to.  */
+  requestedRole?: RoleUpgradeApplicationsEntityRequestedRoleEnum;
   /** The staff member's current clinical role at the time of application (e.g. CITR, CCA, LPN, RN).  */
   currentRole?: string;
   /** Timestamp when the application was submitted by the staff member.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
@@ -606,12 +665,8 @@ export interface IRoleUpgradeApplicationsEntity {
   rejectionReason?: string;
   /** Email address of the applying staff member. Denormalized for quick lookup without joining StaffProfiles.  */
   staffEmail?: string;
-  /** Timestamp when the application was reviewed (approved or rejected) by an admin. Null until reviewed.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
-  reviewedAt?: string;
   /** Foreign key reference to the StaffProfiles table id. Links the application to the applying staff member.  */
   staffProfileId?: string;
-  /** The clinical role the staff member is applying to upgrade to.  */
-  requestedRole?: RoleUpgradeApplicationsEntityRequestedRoleEnum;
 }
 
 export const RoleUpgradeApplicationsEntity = {
@@ -649,8 +704,6 @@ export const ShiftApplicationsEntity = {
   instanceType: {} as IShiftApplicationsEntity,
 } as const;
 
-export type ShiftsEntityRequiredRoleEnum = "RN" | "LPN" | "CCA" | "CITR";
-
 export type ShiftsEntityStatusEnum =
   | "open"
   | "claimed"
@@ -659,30 +712,18 @@ export type ShiftsEntityStatusEnum =
   | "cancelled"
   | "assigned";
 
+export type ShiftsEntityRequiredRoleEnum = "RN" | "LPN" | "CCA" | "CITR";
+
 /**
  * Stores shift opportunities including timing, requirements, and compensation. Created by facility managers and applied to by staff.
  */
 export interface IShiftsEntity {
-  /** Combined date and time for shift start. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
-  startDateTime?: string;
   /** Combined date and time for shift end. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   endDateTime?: string;
-  /** The pay/billing multiplier for this shift if it falls on a holiday. Defaults to 1.0 (no multiplier). Set automatically to the holiday's multiplier (e.g. 1.5) when isHoliday is true.  */
-  holidayMultiplier?: number;
-  /** True if the shift date falls on a statutory holiday. Automatically set by the onShiftCreated workflow by checking the Holidays table.  */
-  isHoliday?: boolean;
   /** Reason provided when shift status is changed to cancelled. Nullable for non-cancelled shifts.  */
   cancelledReason?: string;
-  /** Healthcare role type required for this shift  */
-  requiredRole?: ShiftsEntityRequiredRoleEnum;
-  /** Optional notes about orientation requirements for this shift, shown to staff when they view the shift details. Only relevant when requiresOrientation is true.  */
-  orientationNotes?: string;
-  /** True if shift was posted less than 24 hours before start time (qualifies for short notice pay multiplier)  */
-  isShortNotice?: boolean;
   /** The StaffProfiles record ID of the staff member directly assigned to this private shift. Only set when isPrivate=true and the FM uses the 'Assign to Staff' mode. Used to filter the shift into the assigned staff member's My Shifts view.  */
   assignedStaffId?: string;
-  /** Whether this shift requires staff to have a completed orientation record at the facility before they can apply. When true, checkEligibility will verify the Orientations table. Defaults to false.  */
-  requiresOrientation?: boolean;
   /** Current shift status  */
   status?: ShiftsEntityStatusEnum;
   /** Billing rate (CAD/hr) captured at shift creation time from the billingRates table for this facility+role. Overridable by FM at creation. Used for invoice calculations. Visible to admin and facility managers.  */
@@ -691,20 +732,36 @@ export interface IShiftsEntity {
   facilityProfileId?: string;
   /** Staff pay rate (CAD/hr) captured at shift creation time from the staffRates table for this facility+role. Overridable by FM at creation. Used for payroll calculations. Visible to admin and staff only.  */
   shiftStaffRate?: number;
-  /** Special instructions from facility for this shift  */
-  notes?: string;
-  /** Number of staff slots that have been filled (claimed) for this shift. Starts at 0, increments each time a staff member claims a slot. When filledCount equals headcount, the shift is considered fully booked.  */
-  filledCount?: number;
   /** Number of staff needed for this shift (default 1)  */
   headcount?: number;
   /** When true, this shift is hidden from the general staff marketplace and only visible to specific staff (e.g. favorites or directly assigned). Defaults to false (visible to all eligible staff).  */
   isPrivate?: boolean;
+  /** Combined date and time for shift start. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  startDateTime?: string;
+  /** The pay/billing multiplier for this shift if it falls on a holiday. Defaults to 1.0 (no multiplier). Set automatically to the holiday's multiplier (e.g. 1.5) when isHoliday is true.  */
+  holidayMultiplier?: number;
+  /** True if the shift date falls on a statutory holiday. Automatically set by the onShiftCreated workflow by checking the Holidays table.  */
+  isHoliday?: boolean;
+  /** Healthcare role type required for this shift  */
+  requiredRole?: ShiftsEntityRequiredRoleEnum;
+  /** Optional notes about orientation requirements for this shift, shown to staff when they view the shift details. Only relevant when requiresOrientation is true.  */
+  orientationNotes?: string;
+  /** True if shift was posted less than 24 hours before start time (qualifies for short notice pay multiplier)  */
+  isShortNotice?: boolean;
+  /** Whether this shift requires staff to have a completed orientation record at the facility before they can apply. When true, checkEligibility will verify the Orientations table. Defaults to false.  */
+  requiresOrientation?: boolean;
+  /** Special instructions from facility for this shift  */
+  notes?: string;
+  /** Number of staff slots that have been filled (claimed) for this shift. Starts at 0, increments each time a staff member claims a slot. When filledCount equals headcount, the shift is considered fully booked.  */
+  filledCount?: number;
 }
 
 export const ShiftsEntity = {
   tableBlockId: "69c51948792a18ec31892e38",
   instanceType: {} as IShiftsEntity,
 } as const;
+
+export type ShiftTradesEntityRequestTypeEnum = "trade" | "giveaway";
 
 export type ShiftTradesEntityStatusEnum =
   | "open"
@@ -714,12 +771,20 @@ export type ShiftTradesEntityStatusEnum =
   | "cancelled"
   | "admin_approved";
 
-export type ShiftTradesEntityRequestTypeEnum = "trade" | "giveaway";
-
 /**
  * Stores shift trade and giveaway requests initiated by staff. A trade involves swapping two shifts between staff members; a giveaway is a one-way handoff. Admin approval is required before shifts are reassigned. Links to Shifts (originalShiftId, offeredShiftId) and uses email references for staff.
  */
 export interface IShiftTradesEntity {
+  /** Timestamp when the trade request was submitted. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  requestedAt?: string;
+  /** Email of the staff member who accepted the trade offer (set when status moves to pending)  */
+  acceptedByEmail?: string;
+  /** Email of the specific staff member targeted for the trade. Null means open to all eligible staff.  */
+  targetStaffEmail?: string;
+  /** Timestamp when admin approved or rejected the trade. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  approvedAt?: string;
+  /** Type of request: trade means swap two shifts, giveaway means hand off with no return shift  */
+  requestType?: ShiftTradesEntityRequestTypeEnum;
   /** Optional reason provided by admin when rejecting a trade request  */
   rejectionReason?: string;
   /** Timestamp when a staff member accepted or admin responded to the request. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
@@ -728,24 +793,14 @@ export interface IShiftTradesEntity {
   reason?: string;
   /** ID of the shift the requesting staff member wants to give away or trade  */
   originalShiftId?: string;
-  /** Timestamp when the trade request was submitted. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
-  requestedAt?: string;
   /** Email of the admin or FM who approved or rejected the trade  */
   approvedByEmail?: string;
   /** ID of the shift offered in exchange (only for trade type). Null for giveaway requests.  */
   offeredShiftId?: string;
-  /** Email of the staff member who accepted the trade offer (set when status moves to pending)  */
-  acceptedByEmail?: string;
-  /** Email of the specific staff member targeted for the trade. Null means open to all eligible staff.  */
-  targetStaffEmail?: string;
   /** Email of the staff member initiating the trade or giveaway request  */
   originalStaffEmail?: string;
-  /** Timestamp when admin approved or rejected the trade. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
-  approvedAt?: string;
   /** Current status of the trade request. open=visible to eligible staff, pending=staff accepted awaiting admin, accepted/rejected=admin decision, cancelled=requester cancelled, admin_approved=fully approved and shifts reassigned  */
   status?: ShiftTradesEntityStatusEnum;
-  /** Type of request: trade means swap two shifts, giveaway means hand off with no return shift  */
-  requestType?: ShiftTradesEntityRequestTypeEnum;
 }
 
 export const ShiftTradesEntity = {
@@ -769,28 +824,28 @@ export interface ISignatureRequestsEntity {
   status?: SignatureRequestsEntityStatusEnum;
   /** Full name of the staff member at the time the request was sent. Denormalized for display.  */
   staffName?: string;
-  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
-  staffEmail?: string;
   /** Timestamp when the staff member completed signing. Populated by the HandleSignatureCompleted action.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   signedAt?: string;
   /** Foreign key reference to StaffProfiles.id — the staff member who needs to sign  */
   staffProfileId?: string;
   /** Name of the contract template at the time of sending. Denormalized for display even if template is later renamed.  */
   contractTemplateName?: string;
-  /** Email of the admin who approved or rejected this signed document.  */
-  reviewedByEmail?: string;
   /** DocuSeal submission ID returned by Submit Prefilled Templates. Used to match incoming E-Signature Event webhook callbacks.  */
   submissionId?: number;
   /** The signing URL sent to the staff member. Can be shared directly if email/SMS delivery fails.  */
   signingUrl?: string;
-  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
-  docusealTemplateId?: number;
   /** Admin-provided reason for rejecting the signed document. Only populated when status=rejected.  */
   rejectionReason?: string;
-  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
-  contractTemplateId?: string;
   /** Timestamp when the signing request was sent to the staff member.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   sentAt?: string;
+  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
+  staffEmail?: string;
+  /** Email of the admin who approved or rejected this signed document.  */
+  reviewedByEmail?: string;
+  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
+  docusealTemplateId?: number;
+  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
+  contractTemplateId?: string;
 }
 
 export const SignatureRequestsEntity = {
@@ -811,30 +866,42 @@ export type StaffAvailabilityEntityDayOfWeekEnum =
  * Stores each staff member's preferred working schedule by day of week. Each record represents one day's availability window. Used by facility managers when posting shifts to see which staff prefer to work at that time. Staff can still apply for shifts outside their stated availability.
  */
 export interface IStaffAvailabilityEntity {
-  /** Optional end date until which this availability preference is active. Null means no expiry.. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
-  effectiveTo?: string;
   /** Preferred shift start time in HH:MM 24-hour format (e.g. '07:00'). Represents the earliest time the staff member prefers to start.  */
   startTime?: string;
   /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
   staffEmail?: string;
-  /** Preferred shift end time in HH:MM 24-hour format (e.g. '19:00'). Represents the latest time the staff member prefers to finish.  */
-  endTime?: string;
   /** Day of the week this availability record applies to.  */
   dayOfWeek?: StaffAvailabilityEntityDayOfWeekEnum;
   /** Optional start date from which this availability preference is active. Null means always active.. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
   effectiveFrom?: string;
   /** Foreign key reference to StaffProfiles.id. Links this availability record to a specific staff member.  */
   staffProfileId?: string;
-  /** Whether the staff member is available on this day at all. If false, they prefer not to work this day regardless of time.  */
-  isAvailable?: boolean;
   /** Optional free-text notes about availability for this day (e.g. 'prefer morning shifts only', 'available after 2pm').  */
   notes?: string;
+  /** Preferred shift end time in HH:MM 24-hour format (e.g. '19:00'). Represents the latest time the staff member prefers to finish.  */
+  endTime?: string;
+  /** Whether the staff member is available on this day at all. If false, they prefer not to work this day regardless of time.  */
+  isAvailable?: boolean;
+  /** Optional end date until which this availability preference is active. Null means no expiry.. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
+  effectiveTo?: string;
 }
 
 export const StaffAvailabilityEntity = {
   tableBlockId: "69c51950792a18ec318934dd",
   instanceType: {} as IStaffAvailabilityEntity,
 } as const;
+
+export type StaffDocumentsEntityDocumentCategoryEnum =
+  | "identification"
+  | "medical"
+  | "certification"
+  | "other";
+
+export type StaffDocumentsEntityReviewStatusEnum =
+  | "pending_review"
+  | "approved"
+  | "rejected"
+  | "expired";
 
 export type StaffDocumentsEntityDocumentTypeEnum =
   | "contractor_letter"
@@ -853,42 +920,30 @@ export type StaffDocumentsEntityDocumentTypeEnum =
   | "background_check"
   | "tb_test";
 
-export type StaffDocumentsEntityDocumentCategoryEnum =
-  | "identification"
-  | "medical"
-  | "certification"
-  | "other";
-
-export type StaffDocumentsEntityReviewStatusEnum =
-  | "pending_review"
-  | "approved"
-  | "rejected"
-  | "expired";
-
 /**
  * Stores uploaded compliance documents for staff members with expiry tracking, review status, and admin approval workflow. Links to StaffProfiles via staffProfileId.
  */
 export interface IStaffDocumentsEntity {
-  /** Type of compliance document uploaded  */
-  documentType?: StaffDocumentsEntityDocumentTypeEnum;
   /** Reference to the RoleUpgradeApplications record this document was uploaded for. Null for general compliance documents. Used to associate documents with specific role upgrade applications.  */
   uploadedForApplicationId?: string;
+  /** S3 URL of the uploaded document file  */
+  fileUrl?: string;
+  /** Category grouping for the document. Used to organize documents in the UI. Options: identification, medical, certification, other. Defaults to 'other' for optional uploads.  */
+  documentCategory?: StaffDocumentsEntityDocumentCategoryEnum;
+  /** Current review and validity status of the document  */
+  reviewStatus?: StaffDocumentsEntityReviewStatusEnum;
+  /** Type of compliance document uploaded  */
+  documentType?: StaffDocumentsEntityDocumentTypeEnum;
   /** Explanation provided by admin if document was rejected  */
   rejectionReason?: string;
   /** Whether this document is required for compliance. Required documents affect complianceStatus; optional documents do not. Defaults to true for all standard role-based documents.  */
   isRequired?: boolean;
-  /** S3 URL of the uploaded document file  */
-  fileUrl?: string;
   /** Reference to the staff profile this document belongs to  */
   staffProfileId?: string;
-  /** Category grouping for the document. Used to organize documents in the UI. Options: identification, medical, certification, other. Defaults to 'other' for optional uploads.  */
-  documentCategory?: StaffDocumentsEntityDocumentCategoryEnum;
   /** Expiration date of the document (if applicable). ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
   expiryDate?: string;
   /** Human-readable name for optional/custom documents uploaded by staff (e.g. 'First Aid Certificate', 'Reference Letter'). Only used when documentType is not one of the standard enum values — stored as free text for optional uploads.  */
   customDocumentName?: string;
-  /** Current review and validity status of the document  */
-  reviewStatus?: StaffDocumentsEntityReviewStatusEnum;
   /** Original file name as uploaded by staff  */
   fileName?: string;
   /** Email of the admin or user who uploaded this document on behalf of the staff member. Null if uploaded by the staff member themselves. Used to track admin-uploaded documents in the role upgrade review flow.  */
@@ -925,19 +980,6 @@ export interface IStaffProfilesEntityPreviousEmployersObject {
   items?: IStaffProfilesEntityStaffProfilesEntityItemsItemObject[];
 }
 
-export type StaffProfilesEntityHighestEducationEnum =
-  | "high_school"
-  | "college"
-  | "diploma"
-  | "bachelors"
-  | "masters"
-  | "doctorate";
-
-export type StaffProfilesEntityPaymentMethodEnum =
-  | "direct_deposit"
-  | "cheque"
-  | "e_transfer";
-
 export type StaffProfilesEntityRoleTypeEnum = "RN" | "LPN" | "CCA" | "CITR";
 
 export type StaffProfilesEntityWorkPermitStatusEnum =
@@ -952,6 +994,26 @@ export type StaffProfilesEntityOnboardingStatusEnum =
   | "rejected";
 
 /**
+ * JSON array of professional certifications held by the staff member, each with a name and optional expiry date.
+ */
+export interface IStaffProfilesEntityCertificationsObject {
+  items?: IStaffProfilesEntityStaffProfilesEntityItemsItemObject[];
+}
+
+export type StaffProfilesEntityHighestEducationEnum =
+  | "high_school"
+  | "college"
+  | "diploma"
+  | "bachelors"
+  | "masters"
+  | "doctorate";
+
+export type StaffProfilesEntityPaymentMethodEnum =
+  | "direct_deposit"
+  | "cheque"
+  | "e_transfer";
+
+/**
  * undefined
  */
 export interface IStaffProfilesEntityStaffProfilesEntityProfessionalReferencesItemObject {
@@ -961,13 +1023,6 @@ export interface IStaffProfilesEntityStaffProfilesEntityProfessionalReferencesIt
   phone?: string;
   /** Professional relationship to the staff member  */
   relationship?: string;
-}
-
-/**
- * JSON array of professional certifications held by the staff member, each with a name and optional expiry date.
- */
-export interface IStaffProfilesEntityCertificationsObject {
-  items?: IStaffProfilesEntityStaffProfilesEntityItemsItemObject[];
 }
 
 export type StaffProfilesEntityShirtSizeEnum =
@@ -998,70 +1053,72 @@ export interface IStaffProfilesEntityStaffProfilesEntityPreferredAvailabilityIte
  * Stores staff-specific data including credentials, specialties, and availability. Linked to Users entity via email.
  */
 export interface IStaffProfilesEntity {
-  /** Tracks how many approved withdrawals this staff member has had. Incremented each time a withdrawal request is approved. Used to flag frequent withdrawers (>= 3) for admin review.  */
-  withdrawalCount?: number;
   /** JSON array of previous employer records filled during onboarding or profile editing. Each entry contains company name, role title, start/end dates, and a description of responsibilities.  */
   previousEmployers?: IStaffProfilesEntityPreviousEmployersObject;
-  /** Phone number of emergency contact person  */
-  emergencyContactPhone?: string;
-  /** Total years of healthcare experience declared by the staff member during onboarding or profile editing. Used for quick reference alongside the detailed previousEmployers list.  */
-  totalHealthcareYears?: number;
-  /** Short 'about me' description written by the staff member  */
-  bio?: string;
   /** URL to the staff member's avatar/profile photo image  */
   profilePhotoUrl?: string;
   /** JSON array of languages spoken by the staff member, e.g. ["English", "French"]  */
   languages?: string[];
   /** Province of residence for the staff member  */
   province?: string;
-  /** Highest level of education completed by the staff member. Used in profile display and career advancement context.  */
-  highestEducation?: StaffProfilesEntityHighestEducationEnum;
   /** City of residence for the staff member  */
   city?: string;
-  /** Preferred payment method for payroll. Options: direct_deposit, cheque, e_transfer. Defaults to direct_deposit.  */
-  paymentMethod?: StaffProfilesEntityPaymentMethodEnum;
   /** Date of birth for age verification and compliance requirements. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
   dateOfBirth?: string;
-  /** Staff member's first name  */
-  firstName?: string;
   /** Healthcare role type - structured classification of staff member's professional role  */
   roleType?: StaffProfilesEntityRoleTypeEnum;
   /** Name of the educational institution where the highest degree was obtained (e.g. Dalhousie University, NSCC).  */
   institution?: string;
-  /** Number of years of professional healthcare experience  */
-  yearsOfExperience?: number;
   /** Staff member's street address for contact and payroll purposes  */
   streetAddress?: string;
   /** Work authorization status of the staff member  */
   workPermitStatus?: StaffProfilesEntityWorkPermitStatusEnum;
   /** Onboarding progress tracking - staff must be approved before they can claim shifts  */
   onboardingStatus?: StaffProfilesEntityOnboardingStatusEnum;
-  /** JSON array of professional references with name, phone, and relationship  */
-  professionalReferences?: IStaffProfilesEntityStaffProfilesEntityProfessionalReferencesItemObject[];
   /** JSON array of professional certifications held by the staff member, each with a name and optional expiry date.  */
   certifications?: IStaffProfilesEntityCertificationsObject;
   /** Whether the staff member has explicitly saved their weekly availability preferences. False by default until they save their first availability schedule. Used by admin to see which staff have configured their availability.  */
   isAvailabilitySet?: boolean;
   /** Year the staff member graduated from their highest education program (e.g. 2018).  */
   graduationYear?: number;
-  /** Bank transit/routing number for direct deposit setup. Stored securely and displayed masked in the UI.  */
-  bankTransitNumber?: string;
   /** Timestamp of when the staff member last opened the Notifications panel. Used to calculate the unread notification count badge. Null means never viewed (all notifications are unread).. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   lastViewedNotificationsDate?: string;
-  /** Contact phone number  */
-  phone?: string;
   /** Calculated average of all ratings received from facility managers. Updated automatically each time a new rating is submitted. Displayed as stars (e.g. 4.7) on staff profile and admin views.  */
   averageRating?: number;
   /** Last 4 digits of the staff member's bank account number for verification purposes. Stored masked for security.  */
   bankAccountLast4?: string;
+  /** Social Insurance Number (SIN) for payroll and tax purposes — stored securely  */
+  sinNumber?: string;
+  /** Staff member's last name  */
+  lastName?: string;
+  /** Tracks how many approved withdrawals this staff member has had. Incremented each time a withdrawal request is approved. Used to flag frequent withdrawers (>= 3) for admin review.  */
+  withdrawalCount?: number;
+  /** Phone number of emergency contact person  */
+  emergencyContactPhone?: string;
+  /** Total years of healthcare experience declared by the staff member during onboarding or profile editing. Used for quick reference alongside the detailed previousEmployers list.  */
+  totalHealthcareYears?: number;
+  /** Short 'about me' description written by the staff member  */
+  bio?: string;
+  /** Highest level of education completed by the staff member. Used in profile display and career advancement context.  */
+  highestEducation?: StaffProfilesEntityHighestEducationEnum;
+  /** Preferred payment method for payroll. Options: direct_deposit, cheque, e_transfer. Defaults to direct_deposit.  */
+  paymentMethod?: StaffProfilesEntityPaymentMethodEnum;
+  /** Staff member's first name  */
+  firstName?: string;
+  /** Number of years of professional healthcare experience  */
+  yearsOfExperience?: number;
+  /** JSON array of professional references with name, phone, and relationship  */
+  professionalReferences?: IStaffProfilesEntityStaffProfilesEntityProfessionalReferencesItemObject[];
+  /** Bank transit/routing number for direct deposit setup. Stored securely and displayed masked in the UI.  */
+  bankTransitNumber?: string;
+  /** Contact phone number  */
+  phone?: string;
   /** Postal code of the staff member's address  */
   postalCode?: string;
   /** Name of the staff member's bank for direct deposit (e.g., TD Canada Trust, RBC). Only relevant when paymentMethod = direct_deposit.  */
   bankName?: string;
   /** Staff member's shirt size for uniform ordering  */
   shirtSize?: StaffProfilesEntityShirtSizeEnum;
-  /** Social Insurance Number (SIN) for payroll and tax purposes — stored securely  */
-  sinNumber?: string;
   /** Current compliance status based on document expiry and requirements - determines if staff can work shifts  */
   complianceStatus?: StaffProfilesEntityComplianceStatusEnum;
   /** Timestamp of when the staff member last opened the Messages inbox. Used to calculate the unread message count badge in the navigation.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
@@ -1074,8 +1131,6 @@ export interface IStaffProfilesEntity {
   preferredAvailability?: IStaffProfilesEntityStaffProfilesEntityPreferredAvailabilityItemObject[];
   /** JSON array of special clinical skills, e.g. ["Wound Care", "Dementia Care", "IV Certified"]  */
   specialSkills?: string[];
-  /** Staff member's last name  */
-  lastName?: string;
   /** Email address linking to Users entity  */
   email?: string;
   /** Full name of emergency contact person  */
@@ -1095,16 +1150,16 @@ export type StaffRatesEntityRoleTypeEnum = "RN" | "LPN" | "CCA" | "CITR";
 export interface IStaffRatesEntity {
   /** Rate multiplier applied for statutory holidays. Default 1.5 (time and a half). Applied to staff rates.  */
   holidayMultiplier?: number;
-  /** Rate multiplier applied when shifts are posted less than 24 hours ahead. Default 1.0 (no premium). Example: 1.25 = 25% premium for short notice shifts.  */
-  shortNoticeMultiplier?: number;
   /** Reference to Facilities table id  */
   facilityProfileId?: string;
-  /** Healthcare role type for this rate configuration (RN, LPN, CCA, CITR)  */
-  roleType?: StaffRatesEntityRoleTypeEnum;
   /** Hourly rate paid to staff in CAD. CONFIDENTIAL: visible to admin + staff only, never to facilities. This is what ALJO pays the worker.  */
   staffRate?: number;
   /** Rate multiplier applied for overtime hours (typically over 8 hours/day or 40 hours/week). Default 1.5 (time and a half). Applied to staff rates.  */
   overtimeMultiplier?: number;
+  /** Rate multiplier applied when shifts are posted less than 24 hours ahead. Default 1.0 (no premium). Example: 1.25 = 25% premium for short notice shifts.  */
+  shortNoticeMultiplier?: number;
+  /** Healthcare role type for this rate configuration (RN, LPN, CCA, CITR)  */
+  roleType?: StaffRatesEntityRoleTypeEnum;
 }
 
 export const StaffRatesEntity = {
@@ -1152,46 +1207,46 @@ export type TimeLogsEntityGeofenceStatusEnum =
  * Stores clock in/out timestamps with GPS coordinates for geofence verification. Tracks staff attendance at facilities with automatic break deductions and total hours calculations. Links to ShiftListings, StaffProfiles, and Facilities for complete shift tracking.
  */
 export interface ITimeLogsEntity {
-  /** True if an admin manually adjusted the clock-in time, clock-out time, or break minutes for this time log. Used to flag records that differ from the original GPS-recorded times.  */
-  adminAdjusted?: boolean;
   /** Timestamp when staff clocked in to start the shift. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   clockInTime?: string;
+  /** Reference to Shifts table id  */
+  shiftProfileId?: string;
+  /** GPS longitude coordinate at clock-out for geofence verification  */
+  clockOutLng?: number;
+  /** Flag set to true when the raw hours worked exceed the scheduled shift duration. Total hours are capped at the scheduled duration for pay purposes.  */
+  overtimeFlagged?: boolean;
+  /** Admin notes explaining why the time log was adjusted (e.g. 'Staff forgot to clock out - adjusted to shift end time'). Only populated when adminAdjusted is true.  */
+  adjustmentNotes?: string;
+  /** When true, this time log has been approved by an admin and is permanently locked from editing by both admin and staff. Set to true via the Approve button in AdminTimesheet. Cannot be reversed through the UI.  */
+  isApproved?: boolean;
+  /** The scheduled shift duration in hours (endDateTime - startDateTime). Used to cap totalHours and detect overtime.  */
+  scheduledHours?: number;
+  /** Flag set to true if a clock-in attempt was blocked because the staff member tried to clock in more than 30 minutes after the shift start time.  */
+  isLateBlocked?: boolean;
+  /** Timestamp when staff clocked out to end the shift. Null until they clock out.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  clockOutTime?: string;
+  /** True if an admin manually adjusted the clock-in time, clock-out time, or break minutes for this time log. Used to flag records that differ from the original GPS-recorded times.  */
+  adminAdjusted?: boolean;
   /** GPS longitude coordinate at clock-in for geofence verification  */
   clockInLng?: number;
   /** Calculated total hours worked: (clockOut - clockIn - break) in hours  */
   totalHours?: number;
   /** GPS latitude coordinate at clock-out for geofence verification  */
   clockOutLat?: number;
-  /** Reference to Shifts table id  */
-  shiftProfileId?: string;
   /** Flag set to true when staff clocked out more than 30 minutes after shift.endDateTime. Flagged for admin review but clock-out is still allowed.  */
   lateClockOutFlagged?: boolean;
-  /** GPS longitude coordinate at clock-out for geofence verification  */
-  clockOutLng?: number;
   /** Reference to the staff member who clocked in/out  */
   staffProfileId?: string;
-  /** Flag set to true when the raw hours worked exceed the scheduled shift duration. Total hours are capped at the scheduled duration for pay purposes.  */
-  overtimeFlagged?: boolean;
-  /** Admin notes explaining why the time log was adjusted (e.g. 'Staff forgot to clock out - adjusted to shift end time'). Only populated when adminAdjusted is true.  */
-  adjustmentNotes?: string;
   /** Flag set to true when the system automatically clocked out the staff member because no clock-out was recorded within 2 hours after shift.endDateTime. The clockOutTime is set to shift.endDateTime in this case.  */
   autoClockOut?: boolean;
-  /** When true, this time log has been approved by an admin and is permanently locked from editing by both admin and staff. Set to true via the Approve button in AdminTimesheet. Cannot be reversed through the UI.  */
-  isApproved?: boolean;
   /** GPS latitude coordinate at clock-in for geofence verification  */
   clockInLat?: number;
   /** Flag set to true if staff clocked out while outside the facility geofence radius. Allows clock-out to proceed but records the anomaly for review.  */
   clockOutOutsideGeofence?: boolean;
-  /** The scheduled shift duration in hours (endDateTime - startDateTime). Used to cap totalHours and detect overtime.  */
-  scheduledHours?: number;
   /** Auto-calculated break deduction in minutes based on shift duration  */
   breakMinutes?: number;
-  /** Flag set to true if a clock-in attempt was blocked because the staff member tried to clock in more than 30 minutes after the shift start time.  */
-  isLateBlocked?: boolean;
   /** Indicates whether clock-in was within the facility's geofence boundary  */
   geofenceStatus?: TimeLogsEntityGeofenceStatusEnum;
-  /** Timestamp when staff clocked out to end the shift. Null until they clock out.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
-  clockOutTime?: string;
 }
 
 export const TimeLogsEntity = {
@@ -1207,34 +1262,34 @@ export type TimesheetsEntityPaymentStatusEnum = "pending" | "approved" | "paid";
 export interface ITimesheetsEntity {
   /** Email of the admin who approved this timesheet entry. Null until approved.  */
   approvedByEmail?: string;
+  /** Timestamp when this timesheet was marked as paid by admin. Null until paymentStatus transitions to 'paid'. Used for audit trail and payment reporting.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  paidAt?: string;
+  /** Reference to Shifts table id  */
+  shiftProfileId?: string;
+  /** Reference to Facilities table id  */
+  facilityProfileId?: string;
+  /** Rate multiplier applied (e.g., 1.5 for short notice, 2.0 for holidays)  */
+  multiplier?: number;
+  /** Pay period end date for this timesheet entry. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
+  periodEnd?: string;
+  /** Reference to the staff member who worked the shift  */
+  staffProfileId?: string;
   /** Reference to Time Logs table id  */
   timeLogProfileId?: string;
   /** Staff hourly rate applied for this shift  */
   hourlyRate?: number;
   /** Calculated gross pay: totalHours × hourlyRate × multiplier  */
   grossPay?: number;
-  /** Timestamp when this timesheet was marked as paid by admin. Null until paymentStatus transitions to 'paid'. Used for audit trail and payment reporting.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
-  paidAt?: string;
-  /** Reference to Shifts table id  */
-  shiftProfileId?: string;
   /** Timestamp when this timesheet was approved by admin. Null until paymentStatus transitions to 'approved'. Used for audit trail.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   approvedAt?: string;
   /** Current payment status of this timesheet entry  */
   paymentStatus?: TimesheetsEntityPaymentStatusEnum;
-  /** Reference to Facilities table id  */
-  facilityProfileId?: string;
   /** Pay period start date for this timesheet entry. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
   periodStart?: string;
   /** Admin-provided note explaining any manual edits to totalHours or hourlyRate before approval. Required when admin edits a timesheet row.  */
   adjustmentNote?: string;
-  /** Rate multiplier applied (e.g., 1.5 for short notice, 2.0 for holidays)  */
-  multiplier?: number;
   /** Total hours worked during this shift (from time log)  */
   totalHours?: number;
-  /** Pay period end date for this timesheet entry. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
-  periodEnd?: string;
-  /** Reference to the staff member who worked the shift  */
-  staffProfileId?: string;
 }
 
 export const TimesheetsEntity = {
@@ -1326,6 +1381,11 @@ export const AdminStaffManagementPage = {
 export const AdminTimesheetPage = {
   pageBlockId: "69c51957792a18ec31893e74",
   pageName: "AdminTimesheet",
+} as const;
+
+export const FacilityAgreementSignPage = {
+  pageBlockId: "69e9d94f2cf3ead14cd9cf29",
+  pageName: "FacilityAgreementSign",
 } as const;
 
 export const FacilityDashboardPage = {
@@ -1547,28 +1607,28 @@ export interface IApproveSignatureRequestActionActionOutputApproveSignatureReque
   status?: ApproveSignatureRequestActionActionOutputStatusEnum;
   /** Full name of the staff member at the time the request was sent. Denormalized for display.  */
   staffName?: string;
-  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
-  staffEmail?: string;
   /** Timestamp when the staff member completed signing. Populated by the HandleSignatureCompleted action.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   signedAt?: string;
   /** Foreign key reference to StaffProfiles.id — the staff member who needs to sign  */
   staffProfileId?: string;
   /** Name of the contract template at the time of sending. Denormalized for display even if template is later renamed.  */
   contractTemplateName?: string;
-  /** Email of the admin who approved or rejected this signed document.  */
-  reviewedByEmail?: string;
   /** DocuSeal submission ID returned by Submit Prefilled Templates. Used to match incoming E-Signature Event webhook callbacks.  */
   submissionId?: number;
   /** The signing URL sent to the staff member. Can be shared directly if email/SMS delivery fails.  */
   signingUrl?: string;
-  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
-  docusealTemplateId?: number;
   /** Admin-provided reason for rejecting the signed document. Only populated when status=rejected.  */
   rejectionReason?: string;
-  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
-  contractTemplateId?: string;
   /** Timestamp when the signing request was sent to the staff member.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   sentAt?: string;
+  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
+  staffEmail?: string;
+  /** Email of the admin who approved or rejected this signed document.  */
+  reviewedByEmail?: string;
+  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
+  docusealTemplateId?: number;
+  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
+  contractTemplateId?: string;
 }
 
 /**
@@ -1624,70 +1684,72 @@ export interface IApproveWithdrawalActionOutputApproveWithdrawalActionOutputItem
   updatedByAgentId?: string;
   /** Item tenant id  */
   tenantId?: string;
-  /** Tracks how many approved withdrawals this staff member has had. Incremented each time a withdrawal request is approved. Used to flag frequent withdrawers (>= 3) for admin review.  */
-  withdrawalCount?: number;
   /** JSON array of previous employer records filled during onboarding or profile editing. Each entry contains company name, role title, start/end dates, and a description of responsibilities.  */
   previousEmployers?: IApproveWithdrawalActionOutputPreviousEmployersObject;
-  /** Phone number of emergency contact person  */
-  emergencyContactPhone?: string;
-  /** Total years of healthcare experience declared by the staff member during onboarding or profile editing. Used for quick reference alongside the detailed previousEmployers list.  */
-  totalHealthcareYears?: number;
-  /** Short 'about me' description written by the staff member  */
-  bio?: string;
   /** URL to the staff member's avatar/profile photo image  */
   profilePhotoUrl?: string;
   /** JSON array of languages spoken by the staff member, e.g. ["English", "French"]  */
   languages?: string[];
   /** Province of residence for the staff member  */
   province?: string;
-  /** Highest level of education completed by the staff member. Used in profile display and career advancement context.  */
-  highestEducation?: ApproveWithdrawalActionOutputHighestEducationEnum;
   /** City of residence for the staff member  */
   city?: string;
-  /** Preferred payment method for payroll. Options: direct_deposit, cheque, e_transfer. Defaults to direct_deposit.  */
-  paymentMethod?: ApproveWithdrawalActionOutputPaymentMethodEnum;
   /** Date of birth for age verification and compliance requirements. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
   dateOfBirth?: string;
-  /** Staff member's first name  */
-  firstName?: string;
   /** Healthcare role type - structured classification of staff member's professional role  */
   roleType?: ApproveWithdrawalActionOutputRoleTypeEnum;
   /** Name of the educational institution where the highest degree was obtained (e.g. Dalhousie University, NSCC).  */
   institution?: string;
-  /** Number of years of professional healthcare experience  */
-  yearsOfExperience?: number;
   /** Staff member's street address for contact and payroll purposes  */
   streetAddress?: string;
   /** Work authorization status of the staff member  */
   workPermitStatus?: ApproveWithdrawalActionOutputWorkPermitStatusEnum;
   /** Onboarding progress tracking - staff must be approved before they can claim shifts  */
   onboardingStatus?: ApproveWithdrawalActionOutputOnboardingStatusEnum;
-  /** JSON array of professional references with name, phone, and relationship  */
-  professionalReferences?: IApproveWithdrawalActionOutputApproveWithdrawalActionOutputProfessionalReferencesItemObject[];
   /** JSON array of professional certifications held by the staff member, each with a name and optional expiry date.  */
   certifications?: IApproveWithdrawalActionOutputCertificationsObject;
   /** Whether the staff member has explicitly saved their weekly availability preferences. False by default until they save their first availability schedule. Used by admin to see which staff have configured their availability.  */
   isAvailabilitySet?: boolean;
   /** Year the staff member graduated from their highest education program (e.g. 2018).  */
   graduationYear?: number;
-  /** Bank transit/routing number for direct deposit setup. Stored securely and displayed masked in the UI.  */
-  bankTransitNumber?: string;
   /** Timestamp of when the staff member last opened the Notifications panel. Used to calculate the unread notification count badge. Null means never viewed (all notifications are unread).. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   lastViewedNotificationsDate?: string;
-  /** Contact phone number  */
-  phone?: string;
   /** Calculated average of all ratings received from facility managers. Updated automatically each time a new rating is submitted. Displayed as stars (e.g. 4.7) on staff profile and admin views.  */
   averageRating?: number;
   /** Last 4 digits of the staff member's bank account number for verification purposes. Stored masked for security.  */
   bankAccountLast4?: string;
+  /** Social Insurance Number (SIN) for payroll and tax purposes — stored securely  */
+  sinNumber?: string;
+  /** Staff member's last name  */
+  lastName?: string;
+  /** Tracks how many approved withdrawals this staff member has had. Incremented each time a withdrawal request is approved. Used to flag frequent withdrawers (>= 3) for admin review.  */
+  withdrawalCount?: number;
+  /** Phone number of emergency contact person  */
+  emergencyContactPhone?: string;
+  /** Total years of healthcare experience declared by the staff member during onboarding or profile editing. Used for quick reference alongside the detailed previousEmployers list.  */
+  totalHealthcareYears?: number;
+  /** Short 'about me' description written by the staff member  */
+  bio?: string;
+  /** Highest level of education completed by the staff member. Used in profile display and career advancement context.  */
+  highestEducation?: ApproveWithdrawalActionOutputHighestEducationEnum;
+  /** Preferred payment method for payroll. Options: direct_deposit, cheque, e_transfer. Defaults to direct_deposit.  */
+  paymentMethod?: ApproveWithdrawalActionOutputPaymentMethodEnum;
+  /** Staff member's first name  */
+  firstName?: string;
+  /** Number of years of professional healthcare experience  */
+  yearsOfExperience?: number;
+  /** JSON array of professional references with name, phone, and relationship  */
+  professionalReferences?: IApproveWithdrawalActionOutputApproveWithdrawalActionOutputProfessionalReferencesItemObject[];
+  /** Bank transit/routing number for direct deposit setup. Stored securely and displayed masked in the UI.  */
+  bankTransitNumber?: string;
+  /** Contact phone number  */
+  phone?: string;
   /** Postal code of the staff member's address  */
   postalCode?: string;
   /** Name of the staff member's bank for direct deposit (e.g., TD Canada Trust, RBC). Only relevant when paymentMethod = direct_deposit.  */
   bankName?: string;
   /** Staff member's shirt size for uniform ordering  */
   shirtSize?: ApproveWithdrawalActionOutputShirtSizeEnum;
-  /** Social Insurance Number (SIN) for payroll and tax purposes — stored securely  */
-  sinNumber?: string;
   /** Current compliance status based on document expiry and requirements - determines if staff can work shifts  */
   complianceStatus?: ApproveWithdrawalActionOutputComplianceStatusEnum;
   /** Timestamp of when the staff member last opened the Messages inbox. Used to calculate the unread message count badge in the navigation.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
@@ -1700,8 +1762,6 @@ export interface IApproveWithdrawalActionOutputApproveWithdrawalActionOutputItem
   preferredAvailability?: IApproveWithdrawalActionOutputApproveWithdrawalActionOutputPreferredAvailabilityItemObject[];
   /** JSON array of special clinical skills, e.g. ["Wound Care", "Dementia Care", "IV Certified"]  */
   specialSkills?: string[];
-  /** Staff member's last name  */
-  lastName?: string;
   /** Email address linking to Users entity  */
   email?: string;
   /** Full name of emergency contact person  */
@@ -1714,19 +1774,6 @@ export interface IApproveWithdrawalActionOutputApproveWithdrawalActionOutputItem
 export interface IApproveWithdrawalActionOutputPreviousEmployersObject {
   items?: IApproveWithdrawalActionOutputApproveWithdrawalActionOutputItemsItemObject[];
 }
-
-export type ApproveWithdrawalActionOutputHighestEducationEnum =
-  | "high_school"
-  | "college"
-  | "diploma"
-  | "bachelors"
-  | "masters"
-  | "doctorate";
-
-export type ApproveWithdrawalActionOutputPaymentMethodEnum =
-  | "direct_deposit"
-  | "cheque"
-  | "e_transfer";
 
 export type ApproveWithdrawalActionOutputRoleTypeEnum =
   | "RN"
@@ -1746,6 +1793,26 @@ export type ApproveWithdrawalActionOutputOnboardingStatusEnum =
   | "rejected";
 
 /**
+ * JSON array of professional certifications held by the staff member, each with a name and optional expiry date.
+ */
+export interface IApproveWithdrawalActionOutputCertificationsObject {
+  items?: IApproveWithdrawalActionOutputApproveWithdrawalActionOutputItemsItemObject[];
+}
+
+export type ApproveWithdrawalActionOutputHighestEducationEnum =
+  | "high_school"
+  | "college"
+  | "diploma"
+  | "bachelors"
+  | "masters"
+  | "doctorate";
+
+export type ApproveWithdrawalActionOutputPaymentMethodEnum =
+  | "direct_deposit"
+  | "cheque"
+  | "e_transfer";
+
+/**
  * undefined
  */
 export interface IApproveWithdrawalActionOutputApproveWithdrawalActionOutputProfessionalReferencesItemObject {
@@ -1755,13 +1822,6 @@ export interface IApproveWithdrawalActionOutputApproveWithdrawalActionOutputProf
   phone?: string;
   /** Professional relationship to the staff member  */
   relationship?: string;
-}
-
-/**
- * JSON array of professional certifications held by the staff member, each with a name and optional expiry date.
- */
-export interface IApproveWithdrawalActionOutputCertificationsObject {
-  items?: IApproveWithdrawalActionOutputApproveWithdrawalActionOutputItemsItemObject[];
 }
 
 export type ApproveWithdrawalActionOutputShirtSizeEnum =
@@ -2595,14 +2655,16 @@ export interface IPublishContractToDocuSealActionOutputPublishContractToDocuSeal
   fileUrl?: string;
   /** Admin notes or description of what this contract covers  */
   description?: string;
-  /** Email of the admin who uploaded this template  */
-  uploadedByEmail?: string;
-  /** Whether this template is currently active and will be sent to new staff during onboarding. Only active templates are included in signature request batches.  */
-  isActive?: boolean;
   /** The DocuSeal signing role name used in this template (e.g. 'Staff', 'First Party'). Must match the role defined in the template fields.  */
   roleName?: string;
   /** JSON array of field placement objects configured by admin via the in-app PDF viewer. Each object contains: id, x, y, w, h (normalized 0-1 coordinates), page (1-based), type (signature/date/text/initials), role, condition.  */
   fields?: IPublishContractToDocuSealActionOutputFieldsObject;
+  /** Distinguishes whether this template is used for staff onboarding contracts or facility-level agreements. staff_contract = sent to staff during onboarding. facility_agreement = sent to facility managers for facility-level signing. Defaults to staff_contract for backward compatibility.  */
+  templateType?: PublishContractToDocuSealActionOutputTemplateTypeEnum;
+  /** Email of the admin who uploaded this template  */
+  uploadedByEmail?: string;
+  /** Whether this template is currently active and will be sent to new staff during onboarding. Only active templates are included in signature request batches.  */
+  isActive?: boolean;
 }
 
 /**
@@ -2612,6 +2674,10 @@ export interface IPublishContractToDocuSealActionOutputFieldsObject {
   /** Array of field placement objects  */
   items?: IPublishContractToDocuSealActionOutputPublishContractToDocuSealActionOutputItemsItemObject[];
 }
+
+export type PublishContractToDocuSealActionOutputTemplateTypeEnum =
+  | "staff_contract"
+  | "facility_agreement";
 
 /**
  * PublishContractToDocuSeal output payload
@@ -2705,28 +2771,28 @@ export interface IRejectSignatureRequestActionActionOutputRejectSignatureRequest
   status?: RejectSignatureRequestActionActionOutputStatusEnum;
   /** Full name of the staff member at the time the request was sent. Denormalized for display.  */
   staffName?: string;
-  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
-  staffEmail?: string;
   /** Timestamp when the staff member completed signing. Populated by the HandleSignatureCompleted action.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   signedAt?: string;
   /** Foreign key reference to StaffProfiles.id — the staff member who needs to sign  */
   staffProfileId?: string;
   /** Name of the contract template at the time of sending. Denormalized for display even if template is later renamed.  */
   contractTemplateName?: string;
-  /** Email of the admin who approved or rejected this signed document.  */
-  reviewedByEmail?: string;
   /** DocuSeal submission ID returned by Submit Prefilled Templates. Used to match incoming E-Signature Event webhook callbacks.  */
   submissionId?: number;
   /** The signing URL sent to the staff member. Can be shared directly if email/SMS delivery fails.  */
   signingUrl?: string;
-  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
-  docusealTemplateId?: number;
   /** Admin-provided reason for rejecting the signed document. Only populated when status=rejected.  */
   rejectionReason?: string;
-  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
-  contractTemplateId?: string;
   /** Timestamp when the signing request was sent to the staff member.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   sentAt?: string;
+  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
+  staffEmail?: string;
+  /** Email of the admin who approved or rejected this signed document.  */
+  reviewedByEmail?: string;
+  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
+  docusealTemplateId?: number;
+  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
+  contractTemplateId?: string;
 }
 
 /**
@@ -2831,28 +2897,28 @@ export interface IResendSignatureRequestActionActionOutputResendSignatureRequest
   status?: ResendSignatureRequestActionActionOutputStatusEnum;
   /** Full name of the staff member at the time the request was sent. Denormalized for display.  */
   staffName?: string;
-  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
-  staffEmail?: string;
   /** Timestamp when the staff member completed signing. Populated by the HandleSignatureCompleted action.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   signedAt?: string;
   /** Foreign key reference to StaffProfiles.id — the staff member who needs to sign  */
   staffProfileId?: string;
   /** Name of the contract template at the time of sending. Denormalized for display even if template is later renamed.  */
   contractTemplateName?: string;
-  /** Email of the admin who approved or rejected this signed document.  */
-  reviewedByEmail?: string;
   /** DocuSeal submission ID returned by Submit Prefilled Templates. Used to match incoming E-Signature Event webhook callbacks.  */
   submissionId?: number;
   /** The signing URL sent to the staff member. Can be shared directly if email/SMS delivery fails.  */
   signingUrl?: string;
-  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
-  docusealTemplateId?: number;
   /** Admin-provided reason for rejecting the signed document. Only populated when status=rejected.  */
   rejectionReason?: string;
-  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
-  contractTemplateId?: string;
   /** Timestamp when the signing request was sent to the staff member.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   sentAt?: string;
+  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
+  staffEmail?: string;
+  /** Email of the admin who approved or rejected this signed document.  */
+  reviewedByEmail?: string;
+  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
+  docusealTemplateId?: number;
+  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
+  contractTemplateId?: string;
 }
 
 /**
@@ -2963,28 +3029,28 @@ export interface ISendContractToStaffActionOutputSendContractToStaffActionOutput
   status?: SendContractToStaffActionOutputStatusEnum;
   /** Full name of the staff member at the time the request was sent. Denormalized for display.  */
   staffName?: string;
-  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
-  staffEmail?: string;
   /** Timestamp when the staff member completed signing. Populated by the HandleSignatureCompleted action.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   signedAt?: string;
   /** Foreign key reference to StaffProfiles.id — the staff member who needs to sign  */
   staffProfileId?: string;
   /** Name of the contract template at the time of sending. Denormalized for display even if template is later renamed.  */
   contractTemplateName?: string;
-  /** Email of the admin who approved or rejected this signed document.  */
-  reviewedByEmail?: string;
   /** DocuSeal submission ID returned by Submit Prefilled Templates. Used to match incoming E-Signature Event webhook callbacks.  */
   submissionId?: number;
   /** The signing URL sent to the staff member. Can be shared directly if email/SMS delivery fails.  */
   signingUrl?: string;
-  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
-  docusealTemplateId?: number;
   /** Admin-provided reason for rejecting the signed document. Only populated when status=rejected.  */
   rejectionReason?: string;
-  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
-  contractTemplateId?: string;
   /** Timestamp when the signing request was sent to the staff member.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   sentAt?: string;
+  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
+  staffEmail?: string;
+  /** Email of the admin who approved or rejected this signed document.  */
+  reviewedByEmail?: string;
+  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
+  docusealTemplateId?: number;
+  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
+  contractTemplateId?: string;
 }
 
 /**
@@ -3004,6 +3070,101 @@ export const SendContractToStaffAction = {
 
   inputInstanceType: {} as ISendContractToStaffActionInput,
   outputInstanceType: {} as ISendContractToStaffActionOutput,
+} as const;
+
+/**
+ * SendFacilityAgreement input payload
+ */
+export interface ISendFacilityAgreementActionInput {
+  /** FK to Facilities.id  */
+  facilityProfileId: string;
+  /** Facility display name  */
+  facilityName: string;
+  /** FK to ContractTemplates.id  */
+  contractTemplateId: string;
+  /** Email of the admin sending the agreement  */
+  sentByEmail: string;
+  /** Email of the admin who will countersign  */
+  adminEmail: string;
+  /** Name of the admin who will countersign  */
+  adminName: string;
+}
+
+export type SendFacilityAgreementActionOutputStatusEnum =
+  | "pending_fm_signature"
+  | "pending_admin_signature"
+  | "signed"
+  | "expired";
+
+/**
+ * The item inserted into the table, keys are the column names, values are the column values
+ */
+export interface ISendFacilityAgreementActionOutputSendFacilityAgreementActionOutputItemsItemObject {
+  /** Item id  */
+  id?: string;
+  /** Item created at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  createdAt?: string;
+  /** Item updated at. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  updatedAt?: string;
+  /** Item created by user id  */
+  createdBy?: string;
+  /** Item updated by user id  */
+  updatedBy?: string;
+  /** Item updated by agent id  */
+  updatedByAgentId?: string;
+  /** Item tenant id  */
+  tenantId?: string;
+  /** Email of the admin who triggered sending this agreement  */
+  sentByEmail?: string;
+  /** FK to ContractTemplates.id — the facility agreement template used  */
+  contractTemplateId?: string;
+  /** Timestamp when the admin completed countersigning. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  adminSignedAt?: string;
+  /** Expiry date of the signed agreement, set to 1 year after adminSignedAt. When today passes this date, the agreement is flipped to expired and the FM must re-sign.. ISO 8601 date string, format: YYYY-MM-DD, e.g. 2025-09-30  */
+  expiresAt?: string;
+  /** The DocuSeal signing URL for the admin countersignature. Shown in AdminFacilityManagement after FM has signed.  */
+  adminSigningUrl?: string;
+  /** FK to Facilities.id — the facility this agreement belongs to  */
+  facilityProfileId?: string;
+  /** DocuSeal submission ID returned by Submit Prefilled Templates. Used to match incoming E-Signature Event webhook callbacks for both FM and admin signing events.  */
+  docusealSubmissionId?: number;
+  /** Denormalized template name at the time of sending, for display purposes  */
+  contractTemplateName?: string;
+  /** Current status of the facility agreement. pending_fm_signature=sent to FM but not yet signed, pending_admin_signature=FM signed, waiting for admin countersignature, signed=both parties signed, expired=agreement passed its 1-year expiry date  */
+  status?: SendFacilityAgreementActionOutputStatusEnum;
+  /** Full name of the facility manager at the time of sending, denormalized for display  */
+  facilityManagerName?: string;
+  /** Internal URL of the final fully-signed PDF document. Populated after both parties have signed and the document is uploaded to internal storage.  */
+  signedDocumentUrl?: string;
+  /** Denormalized facility name at the time of sending, for display purposes  */
+  facilityName?: string;
+  /** The DocuSeal signing URL for the facility manager. Shown on the FM gate page so they can sign directly.  */
+  fmSigningUrl?: string;
+  /** Timestamp when the facility manager completed signing. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  fmSignedAt?: string;
+  /** Timestamp when the agreement was first sent to the facility manager. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  sentAt?: string;
+  /** Email of the facility manager who needs to sign (first FM assigned to the facility)  */
+  facilityManagerEmail?: string;
+}
+
+/**
+ * SendFacilityAgreement output payload
+ */
+export interface ISendFacilityAgreementActionOutput {
+  /** The items inserted into the table  */
+  items: ISendFacilityAgreementActionOutputSendFacilityAgreementActionOutputItemsItemObject[];
+}
+
+/**
+ * SendFacilityAgreementAction
+ * Admin-triggered action to send a facility agreement to the first facility manager of a facility. Fetches the active facility agreement template, fetches the first FM for the facility, creates a DocuSeal submission with 2 signers (FM first in preserved order, then admin), inserts a FacilityAgreements record, and emails the FM with the signing link.
+ */
+export const SendFacilityAgreementAction = {
+  actionBlockId: "69e9d8a0d90145ecb4d7f72a",
+
+  inputInstanceType: {} as ISendFacilityAgreementActionInput,
+  outputInstanceType: {} as ISendFacilityAgreementActionOutput,
 } as const;
 
 /**
@@ -3056,28 +3217,28 @@ export interface ISendSignatureRequestActionActionOutputSendSignatureRequestActi
   status?: SendSignatureRequestActionActionOutputStatusEnum;
   /** Full name of the staff member at the time the request was sent. Denormalized for display.  */
   staffName?: string;
-  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
-  staffEmail?: string;
   /** Timestamp when the staff member completed signing. Populated by the HandleSignatureCompleted action.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   signedAt?: string;
   /** Foreign key reference to StaffProfiles.id — the staff member who needs to sign  */
   staffProfileId?: string;
   /** Name of the contract template at the time of sending. Denormalized for display even if template is later renamed.  */
   contractTemplateName?: string;
-  /** Email of the admin who approved or rejected this signed document.  */
-  reviewedByEmail?: string;
   /** DocuSeal submission ID returned by Submit Prefilled Templates. Used to match incoming E-Signature Event webhook callbacks.  */
   submissionId?: number;
   /** The signing URL sent to the staff member. Can be shared directly if email/SMS delivery fails.  */
   signingUrl?: string;
-  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
-  docusealTemplateId?: number;
   /** Admin-provided reason for rejecting the signed document. Only populated when status=rejected.  */
   rejectionReason?: string;
-  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
-  contractTemplateId?: string;
   /** Timestamp when the signing request was sent to the staff member.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   sentAt?: string;
+  /** Email of the staff member. Denormalized for quick lookups without joining StaffProfiles.  */
+  staffEmail?: string;
+  /** Email of the admin who approved or rejected this signed document.  */
+  reviewedByEmail?: string;
+  /** DocuSeal template ID used when creating this submission. Stored for re-send operations.  */
+  docusealTemplateId?: number;
+  /** Foreign key reference to ContractTemplates.id — the template used for this signing request  */
+  contractTemplateId?: string;
 }
 
 /**
@@ -3134,46 +3295,46 @@ export interface IStaffUpdateTimeLogActionOutputStaffUpdateTimeLogActionOutputIt
   updatedByAgentId?: string;
   /** Item tenant id  */
   tenantId?: string;
-  /** True if an admin manually adjusted the clock-in time, clock-out time, or break minutes for this time log. Used to flag records that differ from the original GPS-recorded times.  */
-  adminAdjusted?: boolean;
   /** Timestamp when staff clocked in to start the shift. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
   clockInTime?: string;
+  /** Reference to Shifts table id  */
+  shiftProfileId?: string;
+  /** GPS longitude coordinate at clock-out for geofence verification  */
+  clockOutLng?: number;
+  /** Flag set to true when the raw hours worked exceed the scheduled shift duration. Total hours are capped at the scheduled duration for pay purposes.  */
+  overtimeFlagged?: boolean;
+  /** Admin notes explaining why the time log was adjusted (e.g. 'Staff forgot to clock out - adjusted to shift end time'). Only populated when adminAdjusted is true.  */
+  adjustmentNotes?: string;
+  /** When true, this time log has been approved by an admin and is permanently locked from editing by both admin and staff. Set to true via the Approve button in AdminTimesheet. Cannot be reversed through the UI.  */
+  isApproved?: boolean;
+  /** The scheduled shift duration in hours (endDateTime - startDateTime). Used to cap totalHours and detect overtime.  */
+  scheduledHours?: number;
+  /** Flag set to true if a clock-in attempt was blocked because the staff member tried to clock in more than 30 minutes after the shift start time.  */
+  isLateBlocked?: boolean;
+  /** Timestamp when staff clocked out to end the shift. Null until they clock out.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
+  clockOutTime?: string;
+  /** True if an admin manually adjusted the clock-in time, clock-out time, or break minutes for this time log. Used to flag records that differ from the original GPS-recorded times.  */
+  adminAdjusted?: boolean;
   /** GPS longitude coordinate at clock-in for geofence verification  */
   clockInLng?: number;
   /** Calculated total hours worked: (clockOut - clockIn - break) in hours  */
   totalHours?: number;
   /** GPS latitude coordinate at clock-out for geofence verification  */
   clockOutLat?: number;
-  /** Reference to Shifts table id  */
-  shiftProfileId?: string;
   /** Flag set to true when staff clocked out more than 30 minutes after shift.endDateTime. Flagged for admin review but clock-out is still allowed.  */
   lateClockOutFlagged?: boolean;
-  /** GPS longitude coordinate at clock-out for geofence verification  */
-  clockOutLng?: number;
   /** Reference to the staff member who clocked in/out  */
   staffProfileId?: string;
-  /** Flag set to true when the raw hours worked exceed the scheduled shift duration. Total hours are capped at the scheduled duration for pay purposes.  */
-  overtimeFlagged?: boolean;
-  /** Admin notes explaining why the time log was adjusted (e.g. 'Staff forgot to clock out - adjusted to shift end time'). Only populated when adminAdjusted is true.  */
-  adjustmentNotes?: string;
   /** Flag set to true when the system automatically clocked out the staff member because no clock-out was recorded within 2 hours after shift.endDateTime. The clockOutTime is set to shift.endDateTime in this case.  */
   autoClockOut?: boolean;
-  /** When true, this time log has been approved by an admin and is permanently locked from editing by both admin and staff. Set to true via the Approve button in AdminTimesheet. Cannot be reversed through the UI.  */
-  isApproved?: boolean;
   /** GPS latitude coordinate at clock-in for geofence verification  */
   clockInLat?: number;
   /** Flag set to true if staff clocked out while outside the facility geofence radius. Allows clock-out to proceed but records the anomaly for review.  */
   clockOutOutsideGeofence?: boolean;
-  /** The scheduled shift duration in hours (endDateTime - startDateTime). Used to cap totalHours and detect overtime.  */
-  scheduledHours?: number;
   /** Auto-calculated break deduction in minutes based on shift duration  */
   breakMinutes?: number;
-  /** Flag set to true if a clock-in attempt was blocked because the staff member tried to clock in more than 30 minutes after the shift start time.  */
-  isLateBlocked?: boolean;
   /** Indicates whether clock-in was within the facility's geofence boundary  */
   geofenceStatus?: StaffUpdateTimeLogActionOutputGeofenceStatusEnum;
-  /** Timestamp when staff clocked out to end the shift. Null until they clock out.. ISO 8601 datetime string, format: YYYY-MM-DDTHH:MM:SS, e.g. 2025-09-30T18:45:00Z, 2025-09-30T18:45:00+05:30  */
-  clockOutTime?: string;
 }
 
 /**
@@ -3299,14 +3460,16 @@ export interface IUploadContractTemplateActionActionOutputUploadContractTemplate
   fileUrl?: string;
   /** Admin notes or description of what this contract covers  */
   description?: string;
-  /** Email of the admin who uploaded this template  */
-  uploadedByEmail?: string;
-  /** Whether this template is currently active and will be sent to new staff during onboarding. Only active templates are included in signature request batches.  */
-  isActive?: boolean;
   /** The DocuSeal signing role name used in this template (e.g. 'Staff', 'First Party'). Must match the role defined in the template fields.  */
   roleName?: string;
   /** JSON array of field placement objects configured by admin via the in-app PDF viewer. Each object contains: id, x, y, w, h (normalized 0-1 coordinates), page (1-based), type (signature/date/text/initials), role, condition.  */
   fields?: IUploadContractTemplateActionActionOutputFieldsObject;
+  /** Distinguishes whether this template is used for staff onboarding contracts or facility-level agreements. staff_contract = sent to staff during onboarding. facility_agreement = sent to facility managers for facility-level signing. Defaults to staff_contract for backward compatibility.  */
+  templateType?: UploadContractTemplateActionActionOutputTemplateTypeEnum;
+  /** Email of the admin who uploaded this template  */
+  uploadedByEmail?: string;
+  /** Whether this template is currently active and will be sent to new staff during onboarding. Only active templates are included in signature request batches.  */
+  isActive?: boolean;
 }
 
 /**
@@ -3316,6 +3479,10 @@ export interface IUploadContractTemplateActionActionOutputFieldsObject {
   /** Array of field placement objects  */
   items?: IUploadContractTemplateActionActionOutputUploadContractTemplateActionActionOutputItemsItemObject[];
 }
+
+export type UploadContractTemplateActionActionOutputTemplateTypeEnum =
+  | "staff_contract"
+  | "facility_agreement";
 
 /**
  * UploadContractTemplateAction output payload

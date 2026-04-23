@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileSignature, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Loader2, CloudUpload, CheckCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
@@ -35,6 +36,7 @@ export default function AdminContractTemplatesPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<string>("all");
 
   const { data: templates, isLoading } = useEntityGetAll(ContractTemplatesEntity);
   const { updateFunction } = useEntityUpdate(ContractTemplatesEntity);
@@ -108,7 +110,10 @@ export default function AdminContractTemplatesPage() {
     });
   };
 
-  const allTemplates = (templates as any[]) || [];
+  const allTemplatesRaw = (templates as any[]) || [];
+  const allTemplates = typeFilter === "all"
+    ? allTemplatesRaw
+    : allTemplatesRaw.filter((t: any) => (t.templateType || "staff_contract") === typeFilter);
 
   return (
     <div className="p-4 md:p-6 flex flex-col gap-6">
@@ -125,6 +130,15 @@ export default function AdminContractTemplatesPage() {
           Upload New Template
         </Button>
       </div>
+
+      {/* Type Filter Tabs */}
+      <Tabs value={typeFilter} onValueChange={setTypeFilter}>
+        <TabsList>
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="staff_contract">Staff Contracts</TabsTrigger>
+          <TabsTrigger value="facility_agreement">Facility Agreements</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Template Grid */}
       {isLoading ? (
@@ -164,15 +178,28 @@ export default function AdminContractTemplatesPage() {
                         </span>
                       )}
                     </CardTitle>
-                    <Badge
-                      className={
-                        template.isActive
-                          ? "bg-accent/20 text-accent border-accent/30"
-                          : "bg-muted text-muted-foreground"
-                      }
-                    >
-                      {template.isActive ? "Active" : "Inactive"}
-                    </Badge>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge
+                        className={
+                          (template.templateType || "staff_contract") === "facility_agreement"
+                            ? "bg-chart-4/20 text-chart-4 border-chart-4/30"
+                            : "bg-primary/20 text-primary border-primary/30"
+                        }
+                      >
+                        {(template.templateType || "staff_contract") === "facility_agreement"
+                          ? "Facility Agreement"
+                          : "Staff Contract"}
+                      </Badge>
+                      <Badge
+                        className={
+                          template.isActive
+                            ? "bg-accent/20 text-accent border-accent/30"
+                            : "bg-muted text-muted-foreground"
+                        }
+                      >
+                        {template.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">

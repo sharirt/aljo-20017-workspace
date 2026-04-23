@@ -54,6 +54,7 @@ export const UploadTemplateDialog = ({
   // Step 1 state
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [templateType, setTemplateType] = useState<"staff_contract" | "facility_agreement">("staff_contract");
   const [roleName, setRoleName] = useState("Staff");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -79,6 +80,7 @@ export const UploadTemplateDialog = ({
       setStep(isEditMode ? 2 : 1);
       setName("");
       setDescription("");
+      setTemplateType("staff_contract");
       setRoleName("Staff");
       setFile(null);
       setUploading(false);
@@ -137,6 +139,17 @@ export const UploadTemplateDialog = ({
         uploadedByEmail: user.email || "",
       });
       const created = result?.items?.[0];
+      // Update templateType after creation
+      if (created?.id) {
+        try {
+          await updateTemplate({
+            id: created.id,
+            data: { templateType },
+          });
+        } catch {
+          // non-critical, continue
+        }
+      }
       if (created?.id) {
         setTemplateRecordId(created.id);
         if (created.docusealTemplateId) {
@@ -232,6 +245,18 @@ export const UploadTemplateDialog = ({
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
               />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="template-type">Template Type</Label>
+              <Select value={templateType} onValueChange={(v: "staff_contract" | "facility_agreement") => setTemplateType(v)}>
+                <SelectTrigger id="template-type" className="h-11">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="staff_contract">Staff Contract</SelectItem>
+                  <SelectItem value="facility_agreement">Facility Agreement</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="role-name">Signing Role Name</Label>

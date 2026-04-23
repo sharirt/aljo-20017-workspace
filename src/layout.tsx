@@ -61,6 +61,8 @@ import {
   ArrowLeftRight,
 } from "lucide-react";
 import {
+  FacilityAgreementsEntity,
+  FacilityAgreementSignPage,
   ProfilePage,
   LoginPage,
   AdminDashboardPage,
@@ -135,8 +137,32 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     user.isAuthenticated && user.role === "facility_manager"
   );
 
+  const { data: fmAgreements, isLoading: loadingFmAgreements } = useEntityGetAll(
+    FacilityAgreementsEntity,
+    { facilityManagerEmail: user.email },
+    { enabled: user.isAuthenticated && user.role === "facility_manager" }
+  );
+
+  const facilityAgreementSignUrl = getPageUrl(FacilityAgreementSignPage);
   const adminDashboardUrl = getPageUrl(AdminDashboardPage);
   const profilePageUrl = getPageUrl(ProfilePage);
+
+  // FM gate: redirect to agreement sign page if pending
+  useEffect(() => {
+    if (
+      user.isAuthenticated &&
+      user.role === "facility_manager" &&
+      !loadingFmAgreements &&
+      fmAgreements
+    ) {
+      const hasPending = (fmAgreements as any[])?.some(
+        (a: any) => a.status === "pending_fm_signature" || a.status === "expired"
+      );
+      if (hasPending && location.pathname !== facilityAgreementSignUrl) {
+        navigate(facilityAgreementSignUrl, { replace: true });
+      }
+    }
+  }, [user.isAuthenticated, user.role, fmAgreements, loadingFmAgreements, location.pathname, facilityAgreementSignUrl, navigate]);
 
   useEffect(() => {
     if (!user.isAuthenticated && !isLoginPage) {
@@ -262,7 +288,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return "bg-muted text-muted-foreground";
   };
 
+  // Show loading while checking FM agreement gate
+  if (user.isAuthenticated && user.role === "facility_manager" && loadingFmAgreements) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Skeleton className="h-8 w-48" />
+      </div>
+    );
+  }
+
   if (!user.isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        {children}
+      </div>
+    );
+  }
+
+  // FM agreement gate page - render without navigation
+  if (user.role === "facility_manager" && location.pathname === facilityAgreementSignUrl) {
     return (
       <div className="min-h-screen bg-background">
         {children}
