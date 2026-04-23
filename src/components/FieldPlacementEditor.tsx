@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Loader2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -47,11 +47,26 @@ const FIELD_TYPE_BADGE_COLORS: Record<string, string> = {
   checkbox: "bg-chart-5/20 text-chart-5",
 };
 
+const ROLE_BADGE_COLORS = [
+  "bg-primary/20 text-primary",
+  "bg-chart-4/20 text-chart-4",
+];
+
+const getShortRoleName = (role: string): string => {
+  if (!role) return "";
+  const words = role.trim().split(/\s+/);
+  if (words.length >= 2) {
+    return words.map((w) => w[0]?.toUpperCase() || "").join("");
+  }
+  return role;
+};
+
 interface FieldPlacementEditorProps {
   pdfUrl: string;
   fields: FieldPlacement[];
   onFieldsChange: (fields: FieldPlacement[]) => void;
   roleName: string;
+  availableRoles?: string[];
 }
 
 interface DragState {
@@ -67,6 +82,7 @@ export const FieldPlacementEditor = ({
   fields,
   onFieldsChange,
   roleName,
+  availableRoles = [],
 }: FieldPlacementEditorProps) => {
   const overlayRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -78,10 +94,15 @@ export const FieldPlacementEditor = ({
   } | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [selectedType, setSelectedType] = useState<string>("signature");
+  const [selectedRole, setSelectedRole] = useState<string>(
+    availableRoles.length >= 2 ? availableRoles[0] : roleName
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [numPages, setNumPages] = useState(0);
   const [pdfLoading, setPdfLoading] = useState(true);
   const [containerWidth, setContainerWidth] = useState(0);
+
+  const showRoleSelector = availableRoles.length >= 2;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -150,6 +171,7 @@ export const FieldPlacementEditor = ({
       const h = Math.abs(drawing.currentY - drawing.startY);
 
       if (w > 0.02 && h > 0.01) {
+        const assignedRole = showRoleSelector ? selectedRole : roleName;
         const newField: FieldPlacement = {
           id: generateId(),
           x,
@@ -158,7 +180,7 @@ export const FieldPlacementEditor = ({
           h,
           page: currentPage,
           type: selectedType,
-          role: roleName,
+          role: assignedRole,
         };
         onFieldsChange([...fields, newField]);
       }
@@ -192,6 +214,13 @@ export const FieldPlacementEditor = ({
     onFieldsChange(fields.filter((f) => f.id !== id));
   };
 
+  const getRoleBadgeColor = (role: string): string => {
+    if (availableRoles.length < 2) return ROLE_BADGE_COLORS[0];
+    const idx = availableRoles.indexOf(role);
+    if (idx >= 0 && idx < ROLE_BADGE_COLORS.length) return ROLE_BADGE_COLORS[idx];
+    return ROLE_BADGE_COLORS[0];
+  };
+
   const drawingBox = drawing
     ? {
         left: `${Math.min(drawing.startX, drawing.currentX) * 100}%`,
@@ -207,7 +236,7 @@ export const FieldPlacementEditor = ({
       <div className="flex-1 min-w-0">
         {/* Toolbar */}
         <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium">Field type:</span>
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger className="w-36 h-9">
@@ -221,6 +250,26 @@ export const FieldPlacementEditor = ({
                 ))}
               </SelectContent>
             </Select>
+            {showRoleSelector && (
+              <>
+                <div className="flex items-center gap-1">
+                  <Users className="size-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Signing role:</span>
+                </div>
+                <Select value={selectedRole} onValueChange={setSelectedRole}>
+                  <SelectTrigger className="w-44 h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableRoles.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {role}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </>
+            )}
             <span className="text-xs text-muted-foreground hidden sm:inline">
               Click and drag to place fields
             </span>
@@ -320,7 +369,9 @@ export const FieldPlacementEditor = ({
                       onMouseDown={(e) => handleFieldMouseDown(e, field)}
                     >
                       <span className="text-[10px] font-medium truncate text-foreground select-none">
-                        {field.type}
+                        {showRoleSelector
+                          ? `${field.type} · ${getShortRoleName(field.role)}`
+                          : field.type}
                       </span>
                       <button
                         onMouseDown={(e) => {
@@ -369,6 +420,16 @@ export const FieldPlacementEditor = ({
                     >
                       {field.type}
                     </Badge>
+                    {showRoleSelector && (
+                      <Badge
+                        className={cn(
+                          "text-[10px] w-fit",
+                          getRoleBadgeColor(field.role)
+                        )}
+                      >
+                        {field.role}
+                      </Badge>
+                    )}
                     <span className="text-[10px] text-muted-foreground">
                       Page {field.page}
                     </span>

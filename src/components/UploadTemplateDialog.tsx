@@ -39,6 +39,20 @@ interface UploadTemplateDialogProps {
   };
 }
 
+const getAvailableRolesForType = (type: string): string[] => {
+  if (type === "facility_agreement") {
+    return ["Facility Manager", "Admin"];
+  }
+  return [];
+};
+
+const getAvailableRolesForEdit = (roleName?: string): string[] => {
+  if (roleName === "Facility Manager" || roleName === "Admin") {
+    return ["Facility Manager", "Admin"];
+  }
+  return [];
+};
+
 export const UploadTemplateDialog = ({
   open,
   onOpenChange,
@@ -73,6 +87,11 @@ export const UploadTemplateDialog = ({
   const { executeFunction: uploadTemplate } = useExecuteAction(UploadContractTemplateActionAction);
   const { executeFunction: getSignedUrl } = useExecuteAction(GetSignedFileUrlAction);
   const { updateFunction: updateTemplate } = useEntityUpdate(ContractTemplatesEntity);
+
+  // Compute availableRoles
+  const availableRoles = isEditMode
+    ? getAvailableRolesForEdit(editTemplate?.roleName)
+    : getAvailableRolesForType(templateType);
 
   // Reset when dialog closes
   const handleOpenChange = (val: boolean) => {
@@ -308,6 +327,7 @@ export const UploadTemplateDialog = ({
               fields={fields}
               onFieldsChange={setFields}
               roleName={isEditMode ? editTemplate?.roleName || "Staff" : roleName}
+              availableRoles={availableRoles}
             />
             <Button
               className="h-11"
