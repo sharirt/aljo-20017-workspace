@@ -1383,6 +1383,11 @@ export const AdminTimesheetPage = {
   pageName: "AdminTimesheet",
 } as const;
 
+export const AskALJOPage = {
+  pageBlockId: "69ea1f976d38efbb5ef42dba",
+  pageName: "AskALJO",
+} as const;
+
 export const FacilityAgreementSignPage = {
   pageBlockId: "69e9d94f2cf3ead14cd9cf29",
   pageName: "FacilityAgreementSign",
@@ -3158,7 +3163,7 @@ export interface ISendFacilityAgreementActionOutput {
 
 /**
  * SendFacilityAgreementAction
- * Admin-triggered action to send a facility agreement to the first facility manager of a facility. Fetches the active facility agreement template, fetches the first FM for the facility, creates a DocuSeal submission with 2 signers (FM first in preserved order, then admin), inserts a FacilityAgreements record, and emails the FM with the signing link.
+ * Admin-triggered action to send a facility agreement to the first facility manager of a facility. Fetches the active facility agreement template, fetches the first FM for the facility, creates a DocuSeal submission with 2 signers (FM first in preserved order, then admin), inserts a FacilityAgreements record, emails the FM with the signing link, and sends an SMS to the FM's phone with the signing link.
  */
 export const SendFacilityAgreementAction = {
   actionBlockId: "69e9d8a0d90145ecb4d7f72a",
@@ -3549,4 +3554,8 @@ export const ValidateGeofenceAction = {
 
   inputInstanceType: {} as IValidateGeofenceActionInput,
   outputInstanceType: {} as IValidateGeofenceActionOutput,
+} as const;
+
+export const ALJOAssistantAgentChat = {
+  agentChatId: "69ea1f78b011daf99a2dac8c",
 } as const;

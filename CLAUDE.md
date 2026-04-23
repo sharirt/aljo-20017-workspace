@@ -93,7 +93,7 @@ Invoke a skill with the `Skill` tool when the task matches. **Only load a skill 
 | `app-layout`               | Creating or modifying `src/layout.tsx`; designing the app shell — layout shape, navigation, auth-aware branching, role-based variants.                                          |
 | `charts`                   | Building charts with Recharts and `ChartContainer`.                                                                                                                             |
 | `events-calendar`          | Building event calendars with drag-and-drop.                                                                                                                                    |
-| `file-parsing`             | Parsing CSV/Excel files or displaying file previews.                                                                                                                            |
+| `file-parsing`             | Parsing CSV/Excel/PDF files or displaying file previews.                                                                                                                        |
 | `roles-and-authentication` | Auth flows, login/signup pages, role-based access, user-aware UI.                                                                                                               |
 
 ---

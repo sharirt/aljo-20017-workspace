@@ -59,6 +59,7 @@ import {
   ChevronsUpDown,
   CheckCircle,
   ArrowLeftRight,
+  Bot,
 } from "lucide-react";
 import {
   FacilityAgreementsEntity,
@@ -94,6 +95,7 @@ import {
   FacilityManagerHelpPage,
   StaffHelpPage,
   StaffTimesheetPage,
+  AskALJOPage,
   MessagesEntity,
   StaffProfilesEntity,
 } from "@/product-types";
@@ -261,6 +263,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         { title: "Messages", url: getPageUrl(StaffMessagesPage), icon: MessageCircle, badge: unreadBadgeText },
         { title: "My Profile", url: getPageUrl(StaffMyProfilePage), icon: UserCircle, badge: "" },
         { title: "Help", url: getPageUrl(StaffHelpPage), icon: HelpCircle, badge: "" },
+        { title: "Ask ALJO", url: getPageUrl(AskALJOPage), icon: Bot, badge: "" },
       ];
     }
 
