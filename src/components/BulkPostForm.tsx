@@ -6,7 +6,6 @@ import { getPageUrl } from "@/lib/utils";
 import {
   BulkPostShiftsAction,
   AutoAssignFavoritesToShiftAction,
-  StaffRatesEntity,
   BillingRatesEntity,
   ShiftsEntity,
   FacilityDashboardPage,
@@ -34,7 +33,6 @@ import {
   Eye,
   CheckCircle2,
   ArrowRight,
-  Info,
   Loader,
 } from "lucide-react";
 import { format, isBefore, startOfDay } from "date-fns";
@@ -84,37 +82,21 @@ export const BulkPostForm = ({ managerProfile }: BulkPostFormProps) => {
   const [notifyFavorites, setNotifyFavorites] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
-  // Rate fields state
-  const [staffRate, setStaffRate] = useState("");
+  // Billing rate state (read-only, auto-populated)
   const [billingRate, setBillingRate] = useState("");
 
-  // Fetch rate tables for rate lookup
-  const { data: staffRatesData } = useEntityGetAll(
-    StaffRatesEntity,
-    { facilityProfileId },
-    { enabled: !!facilityProfileId }
-  );
-
+  // Fetch billing rates for rate lookup
   const { data: billingRatesData } = useEntityGetAll(
     BillingRatesEntity,
     { facilityProfileId },
     { enabled: !!facilityProfileId }
   );
 
-  // Auto-populate rate fields when requiredRole changes
+  // Auto-populate billing rate when requiredRole changes
   useEffect(() => {
     if (!requiredRole) {
-      setStaffRate("");
       setBillingRate("");
       return;
-    }
-    const matchingStaff = staffRatesData?.find(
-      (r) => r.roleType === requiredRole
-    );
-    if (matchingStaff?.staffRate != null) {
-      setStaffRate(String(matchingStaff.staffRate));
-    } else {
-      setStaffRate("");
     }
     const matchingBilling = billingRatesData?.find(
       (r) => r.roleType === requiredRole
@@ -124,7 +106,7 @@ export const BulkPostForm = ({ managerProfile }: BulkPostFormProps) => {
     } else {
       setBillingRate("");
     }
-  }, [requiredRole, staffRatesData, billingRatesData]);
+  }, [requiredRole, billingRatesData]);
 
   // For updating shifts after bulk creation with rates
   const { updateFunction: updateShift } = useEntityUpdate(ShiftsEntity);
@@ -154,9 +136,6 @@ export const BulkPostForm = ({ managerProfile }: BulkPostFormProps) => {
 
   // Validation
   const validation = useMemo(() => {
-    if (!staffRate || parseFloat(staffRate) <= 0) {
-      return { valid: false, message: "Staff rate is required" };
-    }
     return validateBulkShiftForm({
       facilityProfileId,
       requiredRole: requiredRole as "RN" | "LPN" | "CCA" | "CITR",
@@ -167,7 +146,7 @@ export const BulkPostForm = ({ managerProfile }: BulkPostFormProps) => {
       shiftEndTime: endTime,
       headcount,
     });
-  }, [facilityProfileId, requiredRole, startDate, endDate, selectedDays, startTime, endTime, headcount, staffRate]);
+  }, [facilityProfileId, requiredRole, startDate, endDate, selectedDays, startTime, endTime, headcount]);
 
   const canShowPreview = useMemo(() => {
     return !!(startDate && endDate && selectedDays.length > 0 && startTime && endTime && requiredRole);
@@ -176,7 +155,6 @@ export const BulkPostForm = ({ managerProfile }: BulkPostFormProps) => {
   // Reset form
   const resetForm = useCallback(() => {
     setRequiredRole("");
-    setStaffRate("");
     setBillingRate("");
     setStartDate(undefined);
     setEndDate(undefined);
@@ -243,16 +221,11 @@ export const BulkPostForm = ({ managerProfile }: BulkPostFormProps) => {
 
       setProgress({ current: shiftsCreated, total: totalShifts });
 
-      // Save FM-entered staffRate and auto-populated billingRate on each created shift
-      const rateUpdates: Record<string, number> = {};
-      if (staffRate && parseFloat(staffRate) > 0) {
-        rateUpdates.shiftStaffRate = parseFloat(staffRate);
-      }
-      if (billingRate && parseFloat(billingRate) > 0) {
-        rateUpdates.shiftBillingRate = parseFloat(billingRate);
-      }
-
-      if (Object.keys(rateUpdates).length > 0 && shiftIds.length > 0) {
+      // Save auto-populated billingRate on each created shift
+      if (billingRate && parseFloat(billingRate) > 0 && shiftIds.length > 0) {
+        const rateUpdates: Record<string, number> = {
+          shiftBillingRate: parseFloat(billingRate),
+        };
         for (const sid of shiftIds) {
           try {
             await updateShift({
@@ -320,8 +293,7 @@ export const BulkPostForm = ({ managerProfile }: BulkPostFormProps) => {
       if (shiftsCreated > 0 && errors.length === 0) {
         resetForm();
       }
-    } catch (error) {
-      console.error("Error creating bulk shifts:", error);
+    } catch {
       toast.error("Failed to create shifts. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -330,7 +302,7 @@ export const BulkPostForm = ({ managerProfile }: BulkPostFormProps) => {
     validation, previewItems, facilityProfileId, requiredRole, startDate, endDate,
     selectedDays, startTime, endTime, headcount, notes, requiresOrientation,
     orientationNotes, autoAssignEnabled, executeBulkPost, executeAutoAssign,
-    navigate, resetForm, staffRate, billingRate, updateShift,
+    navigate, resetForm, billingRate, updateShift,
   ]);
 
   const handlePreviewToggle = useCallback(() => {
@@ -419,50 +391,27 @@ export const BulkPostForm = ({ managerProfile }: BulkPostFormProps) => {
             </Select>
           </div>
 
-          {/* Rate Fields */}
+          {/* Billing Rate (read-only) */}
           {requiredRole && (
-            <>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="bulk-staff-rate">Staff Rate ($/hr) *</Label>
-                  <Input
-                    id="bulk-staff-rate"
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    value={staffRate}
-                    onChange={(e) => setStaffRate(e.target.value)}
-                    placeholder="0.00"
-                    className="h-11 text-base"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bulk-billing-rate">
-                    Billing Rate ($/hr){" "}
-                    <span className="text-muted-foreground text-xs">(read-only)</span>
-                  </Label>
-                  <Input
-                    id="bulk-billing-rate"
-                    type="number"
-                    value={billingRate}
-                    disabled
-                    className="h-11 text-base bg-muted/50 cursor-not-allowed"
-                    placeholder="Auto-populated"
-                  />
-                  {requiredRole && !billingRate && (
-                    <p className="text-chart-3 text-xs">
-                      Billing rate not configured for this role. Contact ALJO admin.
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
-                <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                <p className="text-xs text-muted-foreground">
-                  Staff rate is what the staff member earns per hour. Billing rate is what the facility is charged (managed by ALJO admin).
+            <div className="max-w-xs space-y-2">
+              <Label htmlFor="bulk-billing-rate">
+                Billing Rate ($/hr){" "}
+                <span className="text-muted-foreground text-xs">(read-only)</span>
+              </Label>
+              <Input
+                id="bulk-billing-rate"
+                type="number"
+                value={billingRate}
+                disabled
+                className="h-11 text-base bg-muted/50 cursor-not-allowed"
+                placeholder="Auto-populated"
+              />
+              {!billingRate && (
+                <p className="text-chart-3 text-xs">
+                  Billing rate not configured for this role. Contact ALJO admin.
                 </p>
-              </div>
-            </>
+              )}
+            </div>
           )}
 
           {/* Auto-Assign Card */}
