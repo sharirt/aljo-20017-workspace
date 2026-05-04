@@ -53,7 +53,7 @@ export default function AskALJO() {
 
         {/* Chat */}
         <div className="flex-1 overflow-hidden rounded-lg border shadow-sm">
-          <AgentChatSimple agentChat={agentChat} variant="bubble" size="md" chatId="ask-aljo" />
+          <AgentChatSimple agentChat={agentChat} variant="bubble" size="md" chatId="ask-aljo" nonPersistent={true} />
         </div>
       </div>
     </div>

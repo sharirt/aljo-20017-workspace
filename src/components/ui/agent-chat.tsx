@@ -794,7 +794,7 @@ export function AgentChat({
   const [agentChatData, setAgentChatData] = useState<AgentChatData | undefined>(
     undefined,
   );
-  const [memoryEnabled, setMemoryEnabled] = useState(false);
+  const [resolvedAgentBlockId, setResolvedAgentBlockId] = useState<string>('');
 
   const agentChatProps = agentChat.getAgentChatComponentProps();
   const { agentChatId, appId, token } = agentChatProps;
@@ -819,6 +819,9 @@ export function AgentChat({
         const agentBlock = await blocksApiService.getBlock(agentBlockId);
         agentBlockData = agentBlock?.data;
       }
+      setResolvedAgentBlockId(
+        agentBlockData.provider ? agentBlockId : undefined,
+      );
 
       setAgentChatData({
         agent: {
@@ -830,7 +833,6 @@ export function AgentChat({
         initialMessages,
         initialPrompt,
       });
-      setMemoryEnabled(agentChatBlockData.memoryEnabled === true);
     };
 
     fetchAgentChatData();
@@ -845,12 +847,12 @@ export function AgentChat({
     <AgentChatPrimitive.AgentChatRoot
       appId={appId}
       token={token}
+      agentBlockId={resolvedAgentBlockId}
       agentChatId={agentChatId}
       chatContext={finalChatContext}
       agentChatData={agentChatData}
       noPersistency={noPersistency || !user.isAuthenticated}
       {...props}
-      memoryEnabled={memoryEnabled}
     />
   );
 }
