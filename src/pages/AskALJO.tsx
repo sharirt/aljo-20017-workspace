@@ -4,12 +4,14 @@ import { getPageUrl } from "@/lib/utils";
 import { ALJOAssistantAgentChat, LoginPage } from "@/product-types";
 import { AgentChatSimple } from "@/components/ui/agent-chat";
 import { Bot, Info } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 export default function AskALJO() {
   const user = useUser();
   const navigate = useNavigate();
   const agentChat = useAgentChat(ALJOAssistantAgentChat);
+
+  const sessionChatId = useMemo(() => `ask-aljo-${crypto.randomUUID()}`, []);
 
   useEffect(() => {
     if (!user.isAuthenticated) {
@@ -53,7 +55,7 @@ export default function AskALJO() {
 
         {/* Chat */}
         <div className="flex-1 overflow-hidden rounded-lg border shadow-sm">
-          <AgentChatSimple agentChat={agentChat} variant="bubble" size="md" chatId="ask-aljo" nonPersistent={true} />
+          <AgentChatSimple agentChat={agentChat} variant="bubble" size="md" chatId={sessionChatId} nonPersistent={true} />
         </div>
       </div>
     </div>
